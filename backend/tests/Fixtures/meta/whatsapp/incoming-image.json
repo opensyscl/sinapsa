@@ -1,0 +1,40 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "34900111222",
+              "phone_number_id": "PHONE_NUMBER_ID_TEST"
+            },
+            "contacts": [
+              {
+                "profile": { "name": "Marta García" },
+                "wa_id": "34666123456"
+              }
+            ],
+            "messages": [
+              {
+                "from": "34666123456",
+                "id": "wamid.HBgLMzQ2NjYxMjM0NTYVAgARGBI3OTRENTBFNTQ4Mjc4NjIyNzAB",
+                "timestamp": "1714210900",
+                "type": "image",
+                "image": {
+                  "caption": "Mira esta foto del salón",
+                  "mime_type": "image/jpeg",
+                  "sha256": "abcdef0123456789",
+                  "id": "META_MEDIA_ID_TEST_001"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

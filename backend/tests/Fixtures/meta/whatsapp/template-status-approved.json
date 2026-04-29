@@ -1,0 +1,21 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "TEST_WABA_ID",
+      "time": 1714211000,
+      "changes": [
+        {
+          "value": {
+            "event": "APPROVED",
+            "message_template_id": 999888777,
+            "message_template_name": "bienvenida_arrendatario",
+            "message_template_language": "es",
+            "reason": null
+          },
+          "field": "message_template_status_update"
+        }
+      ]
+    }
+  ]
+}

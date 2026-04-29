@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   Euclid Circular B — la tipografía oficial de Sinapsa.
+   No reemplazar por system-ui, Inter, Geist, etc.
+   ─────────────────────────────────────────────────────────────*/
+@font-face {
+  font-family: "Euclid Circular B";
+  src: url("/fonts/euclidcircularb-light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Euclid Circular B";
+  src: url("/fonts/euclidcircularb-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Euclid Circular B";
+  src: url("/fonts/euclidcircularb-regular-italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Euclid Circular B";
+  src: url("/fonts/euclidcircularb-medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Euclid Circular B";
+  src: url("/fonts/euclidcircularb-semibold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Tema Sinapsa — sobrio, blanco, acentos negros.
+   NO usar gradientes chillones ni "AI button look".
+   Cards: rounded-3xl border border-border (NO rounded-2xl shadow-sm).
+   ─────────────────────────────────────────────────────────────*/
+:root {
+  --background: #ffffff;
+  --foreground: #0b0b0c;
+  --muted: #f4f4f5;
+  --muted-foreground: #6b6b72;
+  --border: #ececef;
+  --input: #ececef;
+  --ring: #0b0b0c;
+  --primary: #0b0b0c;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #0b0b0c;
+  --accent: #f0f1ff;
+  --accent-foreground: #0b0b0c;
+  --positive: #15803d;
+  --warning: #b45309;
+  --destructive: #b91c1c;
+  --destructive-foreground: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-positive: var(--positive);
+  --color-warning: var(--warning);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --font-sans: "Euclid Circular B", system-ui, -apple-system, sans-serif;
+}
+
+html, body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }

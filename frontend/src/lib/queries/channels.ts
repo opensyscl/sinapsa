@@ -16,6 +16,8 @@ export type Channel = {
   last_error_code: string | null;
   last_error_message: string | null;
   config: Record<string, unknown> | null;
+  end_user_id: string | null;
+  client_metadata: Record<string, unknown> | null;
   templates_count?: number;
   created_at: string;
 };

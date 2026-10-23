@@ -20,6 +20,7 @@ class ChannelController extends Controller
     {
         $channels = Channel::query()
             ->withCount('templates')
+            ->when($request->query('end_user_id'), fn ($q, $id) => $q->where('end_user_id', $id))
             ->orderByDesc('created_at')
             ->get();
 

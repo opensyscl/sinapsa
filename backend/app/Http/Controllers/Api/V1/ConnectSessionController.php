@@ -6,6 +6,8 @@ use App\Channels\Enums\ChannelType;
 use App\Channels\WhatsAppCloud\Services\MetaEmbeddedSignupService;
 use App\Connect\ConnectSessionTokenService;
 use App\Exceptions\ApiException;
+use App\Integrations\Google\GoogleOAuthService;
+use App\Integrations\IntegrationType;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ChannelResource;
 use App\Http\Resources\ConnectSessionResource;
@@ -27,13 +29,14 @@ use Throwable;
  * Endpoints:
  *  - POST /api/v1/connect-sessions
  *      Auth: sk_live_ con scope channels:write.
- *      Body: { allowed_channel_types?, display_label?, return_url?, client_metadata? }
+ *      Body: { allowed_channel_types?, display_label?, return_url?, client_metadata?, end_user_id? }
+ *      `end_user_id` = id del usuario final en el sistema del cliente SaaS; queda en el Channel/Integration.
  *      → { session_token, hosted_url, expires_at, session: {...} }
  *
  *  - GET /api/v1/connect-sessions/{token}/info
  *      Público (auth via JWT en path).
  *      Lo consume la Hosted Connect Page para mostrar la UI inicial.
- *      → { session: {...}, meta_app_id, embedded_signup_config_id }
+ *      → { session: {...}, meta: {...}, google: { enabled } }
  *
  *  - POST /api/v1/connect-sessions/{token}/complete
  *      Público (auth via JWT en path).
@@ -55,10 +58,12 @@ class ConnectSessionController extends Controller
                 ChannelType::WhatsApp->value,
                 ChannelType::Instagram->value,
                 ChannelType::Messenger->value,
+                IntegrationType::GoogleCalendar->value,
             ])],
             'display_label' => ['nullable', 'string', 'max:120'],
             'return_url' => ['nullable', 'url', 'max:512'],
             'client_metadata' => ['nullable', 'array'],
+            'end_user_id' => ['nullable', 'string', 'max:191'],
         ]);
 
         $caller = $request->user();
@@ -72,6 +77,8 @@ class ConnectSessionController extends Controller
             'display_label' => $data['display_label'] ?? null,
             'return_url' => $data['return_url'] ?? null,
             'client_metadata' => $data['client_metadata'] ?? null,
+            // Compat: antes se mandaba como client_metadata.user_id
+            'end_user_id' => $data['end_user_id'] ?? data_get($data, 'client_metadata.user_id'),
             'status' => ConnectSession::STATUS_PENDING,
             'expires_at' => ConnectSessionTokenService::defaultExpiry(),
             'client_ip' => $request->ip(),
@@ -91,7 +98,7 @@ class ConnectSessionController extends Controller
     /**
      * Endpoint público para la Hosted Connect Page.
      */
-    public function info(string $token): JsonResponse
+    public function info(string $token, GoogleOAuthService $google): JsonResponse
     {
         $session = $this->resolveSession($token);
 
@@ -101,6 +108,9 @@ class ConnectSessionController extends Controller
                 'app_id' => config('sinapsa.meta.app_id'),
                 'graph_version' => config('sinapsa.meta.graph_version'),
                 'wa_embedded_signup_config_id' => config('sinapsa.meta.wa_embedded_signup_config_id'),
+            ],
+            'google' => [
+                'enabled' => $google->isConfigured(),
             ],
         ]);
     }
@@ -151,6 +161,11 @@ class ConnectSessionController extends Controller
                 displayName: $data['display_name'] ?? null,
             );
 
+            $channel->forceFill([
+                'end_user_id' => $session->end_user_id,
+                'client_metadata' => $session->client_metadata,
+            ])->save();
+
             $session->forceFill([
                 'status' => ConnectSession::STATUS_COMPLETED,
                 'completed_at' => now(),
@@ -174,37 +189,8 @@ class ConnectSessionController extends Controller
         }
     }
 
-    /**
-     * Decodifica el JWT y carga el ConnectSession DB. Lanza si:
-     *  - JWT inválido / firma incorrecta / expirado.
-     *  - jti no encontrado en DB.
-     *  - status != pending.
-     *  - DB expires_at en el pasado (defensa en profundidad).
-     */
     protected function resolveSession(string $token): ConnectSession
     {
-        try {
-            $claims = $this->tokens->decode($token);
-        } catch (Throwable $e) {
-            throw ApiException::authentication('invalid_session_token', $e->getMessage());
-        }
-
-        $session = ConnectSession::where('jti', $claims['jti'] ?? '__missing__')->first();
-        if (! $session) {
-            throw ApiException::authentication('session_not_found', 'Connect session not found.');
-        }
-
-        if ($session->status === ConnectSession::STATUS_COMPLETED) {
-            throw ApiException::invalidRequest(
-                'session_already_completed',
-                'This connect session has already been completed.',
-            );
-        }
-        if ($session->status === ConnectSession::STATUS_EXPIRED || $session->expires_at->isPast()) {
-            $session->forceFill(['status' => ConnectSession::STATUS_EXPIRED])->save();
-            throw ApiException::authentication('session_expired', 'Connect session expired.');
-        }
-
-        return $session;
+        return $this->tokens->resolve($token);
     }
 }

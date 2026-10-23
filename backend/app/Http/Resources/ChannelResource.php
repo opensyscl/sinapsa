@@ -25,6 +25,8 @@ class ChannelResource extends JsonResource
             'last_error_code' => $this->last_error_code,
             'last_error_message' => $this->last_error_message,
             'config' => $this->config,
+            'end_user_id' => $this->end_user_id,
+            'client_metadata' => $this->client_metadata,
             'templates_count' => $this->whenCounted('templates'),
             'created_at' => $this->created_at->toIso8601String(),
         ];

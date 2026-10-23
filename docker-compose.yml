@@ -117,3 +117,6 @@ volumes:
 networks:
   one-rrss:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 10.126.0.0/24

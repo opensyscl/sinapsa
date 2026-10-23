@@ -7,11 +7,13 @@ import {
   CheckmarkCircle01Icon,
   AlertCircleIcon,
   WhatsappIcon,
+  GoogleIcon,
   Loading03Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { CONNECT_CHANNEL, notifyAndClose, type ConnectResult } from "./notify";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:48000";
 
@@ -30,7 +32,12 @@ type SessionInfo = {
     graph_version: string;
     wa_embedded_signup_config_id: string;
   };
+  google: {
+    enabled: boolean;
+  };
 };
+
+const META_TYPES = ["whatsapp", "instagram", "messenger"];
 
 declare global {
   interface Window {
@@ -48,37 +55,13 @@ declare global {
   }
 }
 
-/**
- * Notifica al window.opener (la app del cliente SaaS) y cierra.
- * Si la página fue abierta en mismo tab (no popup), redirige a return_url.
- */
-function notifyAndClose(
-  payload: { type: "sinapsa:connected" | "sinapsa:cancelled" | "sinapsa:error"; data?: unknown },
-  returnUrl: string | null,
-) {
-  if (window.opener && !window.opener.closed) {
-    try {
-      window.opener.postMessage(payload, "*");
-    } catch {
-      // noop
-    }
-    setTimeout(() => window.close(), 300);
-    return;
-  }
-  if (returnUrl) {
-    const u = new URL(returnUrl);
-    u.searchParams.set("sinapsa_status", payload.type.replace("sinapsa:", ""));
-    window.location.replace(u.toString());
-  }
-}
-
 function ConnectInner() {
   const params = useSearchParams();
   const token = params.get("token");
   const [info, setInfo] = useState<SessionInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [step, setStep] = useState<"idle" | "popping" | "exchanging" | "done">("idle");
+  const [step, setStep] = useState<"idle" | "popping" | "exchanging" | "redirecting" | "done">("idle");
   const fbReady = useRef(false);
 
   useEffect(() => {
@@ -101,6 +84,25 @@ function ConnectInner() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [token]);
+
+  // Resultado del popup de Google (lo publica /connect/done)
+  useEffect(() => {
+    if (!info) return;
+    const channel = new BroadcastChannel(CONNECT_CHANNEL);
+    channel.onmessage = (e: MessageEvent<ConnectResult | { type: "sinapsa:ack" }>) => {
+      if (e.data?.type === "sinapsa:ack") return;
+      channel.postMessage({ type: "sinapsa:ack" });
+      if (e.data.type === "sinapsa:connected") setStep("done");
+      else setStep("idle");
+      if (e.data.type === "sinapsa:error") {
+        setError((e.data.data as { message?: string })?.message ?? "No se pudo conectar Google.");
+      }
+      if (e.data.type !== "sinapsa:error") {
+        notifyAndClose(e.data, info.session.return_url);
+      }
+    };
+    return () => channel.close();
+  }, [info]);
 
   // Carga el FB SDK perezosamente cuando tengamos info y el flujo esté armado
   useEffect(() => {
@@ -157,6 +159,36 @@ function ConnectInner() {
         extras: { sessionInfoVersion: 3 },
       },
     );
+  };
+
+  // Google: el consentimiento va en un popup propio. Google manda COOP y, si navegáramos
+  // este mismo popup, al volver perderíamos window.opener (la app del cliente SaaS).
+  // /connect/done nos devuelve el resultado por BroadcastChannel.
+  const launchGoogle = async () => {
+    if (!token || !info) return;
+    setStep("redirecting");
+    // Abrir en el mismo click para que el navegador no bloquee el popup
+    const popup = window.open("", "sinapsa-google", "width=520,height=680");
+    try {
+      const r = await fetch(
+        `${API_URL}/api/v1/connect-sessions/${token}/google/authorize?type=google_calendar`,
+        { headers: { Accept: "application/json" } },
+      );
+      const data = await r.json();
+      if (!r.ok) {
+        throw new Error(data?.error?.message ?? "No se pudo iniciar la conexión con Google.");
+      }
+      if (popup) {
+        popup.location.href = data.url;
+      } else {
+        // Popup bloqueado: seguimos en esta ventana; /connect/done usará return_url
+        window.location.assign(data.url);
+      }
+    } catch (e) {
+      popup?.close();
+      setStep("idle");
+      setError(e instanceof Error ? e.message : "Error iniciando Google");
+    }
   };
 
   const completeConnect = async (code: string, phoneNumberId: string, wabaId: string) => {
@@ -231,19 +263,34 @@ function ConnectInner() {
   }
 
   const metaReady = !!info.meta.app_id && !!info.meta.wa_embedded_signup_config_id;
+  const wantsMeta = info.session.allowed_channel_types.some((t) => META_TYPES.includes(t));
+  const wantsGoogle = info.session.allowed_channel_types.includes("google_calendar");
+  const onlyGoogle = wantsGoogle && !wantsMeta;
 
   return (
     <Card className="w-full max-w-md p-8">
       <div className="flex flex-col items-center gap-3 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-positive/10">
-          <HugeiconsIcon icon={WhatsappIcon} size={26} className="text-positive" />
+        <div
+          className={
+            onlyGoogle
+              ? "flex h-14 w-14 items-center justify-center rounded-2xl bg-muted"
+              : "flex h-14 w-14 items-center justify-center rounded-2xl bg-positive/10"
+          }
+        >
+          <HugeiconsIcon
+            icon={onlyGoogle ? GoogleIcon : WhatsappIcon}
+            size={26}
+            className={onlyGoogle ? "text-foreground" : "text-positive"}
+          />
         </div>
         <h1 className="text-xl font-semibold tracking-tight">
-          {info.session.display_label ?? "Conecta tu WhatsApp Business"}
+          {info.session.display_label ??
+            (onlyGoogle ? "Conecta tu Google Calendar" : "Conecta tu WhatsApp Business")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Pulsa continuar para autorizar el acceso vía Meta. La conexión queda
-          vinculada a tu cuenta. No compartiremos credenciales.
+          {onlyGoogle
+            ? "Pulsa continuar para autorizar el acceso vía Google. Solo pediremos permiso para ver tu disponibilidad y gestionar eventos."
+            : "Pulsa continuar para autorizar el acceso vía Meta. La conexión queda vinculada a tu cuenta. No compartiremos credenciales."}
         </p>
         <div className="flex flex-wrap justify-center gap-1.5 pt-1">
           {info.session.allowed_channel_types.map((t) => (
@@ -254,7 +301,7 @@ function ConnectInner() {
         </div>
       </div>
 
-      {!metaReady && (
+      {wantsMeta && !metaReady && (
         <div className="mt-6 rounded-2xl border border-warning/30 bg-warning/5 p-3 text-xs text-warning">
           <strong>Modo dev:</strong> el backend no tiene <code>META_APP_ID</code> /{" "}
           <code>META_WA_EMBEDDED_SIGNUP_CONFIG_ID</code> configurados. El popup
@@ -263,16 +310,36 @@ function ConnectInner() {
         </div>
       )}
 
+      {wantsGoogle && !info.google.enabled && (
+        <div className="mt-6 rounded-2xl border border-warning/30 bg-warning/5 p-3 text-xs text-warning">
+          <strong>Modo dev:</strong> el backend no tiene <code>GOOGLE_CLIENT_ID</code> /{" "}
+          <code>GOOGLE_CLIENT_SECRET</code> configurados.
+        </div>
+      )}
+
       <div className="mt-6 flex flex-col gap-2">
-        <Button
-          onClick={launchEmbeddedSignup}
-          disabled={!metaReady || step !== "idle"}
-          className="w-full"
-        >
-          {step === "popping" && "Esperando ventana de Meta…"}
-          {step === "exchanging" && "Conectando…"}
-          {step === "idle" && "Continuar con Meta"}
-        </Button>
+        {wantsMeta && (
+          <Button
+            onClick={launchEmbeddedSignup}
+            disabled={!metaReady || step !== "idle"}
+            className="w-full"
+          >
+            {step === "popping" && "Esperando ventana de Meta…"}
+            {step === "exchanging" && "Conectando…"}
+            {step !== "popping" && step !== "exchanging" && "Continuar con Meta"}
+          </Button>
+        )}
+        {wantsGoogle && (
+          <Button
+            onClick={launchGoogle}
+            disabled={!info.google.enabled || step !== "idle"}
+            variant={wantsMeta ? "outline" : "primary"}
+            className="w-full"
+          >
+            <HugeiconsIcon icon={GoogleIcon} size={16} />
+            {step === "redirecting" ? "Abriendo Google…" : "Continuar con Google"}
+          </Button>
+        )}
         <Button
           variant="ghost"
           className="w-full"
@@ -283,7 +350,7 @@ function ConnectInner() {
       </div>
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        Powered by Sinapsa · Tech Provider Meta
+        Powered by Sinapsa
       </p>
     </Card>
   );

@@ -20,6 +20,20 @@ return [
         'public_webhook_url' => env('META_PUBLIC_WEBHOOK_URL'),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        // Debe coincidir EXACTO con el "Authorized redirect URI" del OAuth client en Google Cloud.
+        'redirect_uri' => env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://localhost:48000') . '/api/oauth/google/callback'),
+        // Scopes mínimos por producto. Cada scope extra hay que justificarlo en la verificación OAuth.
+        'scopes' => [
+            'calendar' => [
+                'https://www.googleapis.com/auth/calendar.events',
+                'https://www.googleapis.com/auth/calendar.freebusy',
+            ],
+        ],
+    ],
+
     'queues' => [
         // Cada cola tiene su política de retries y prioridad.
         'inbound' => 'inbound',           // alto throughput, retry suave

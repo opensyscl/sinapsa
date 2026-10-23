@@ -5,10 +5,12 @@ use App\Http\Controllers\Api\V1\ChannelController;
 use App\Http\Controllers\Api\V1\ConnectSessionController;
 use App\Http\Controllers\Api\V1\ConversationController;
 use App\Http\Controllers\Api\V1\MessageController;
+use App\Http\Controllers\Api\V1\PublicIntegrationController;
 use App\Http\Controllers\Api\V1\PublicMessageController;
 use App\Http\Controllers\Api\V1\TemplateController;
 use App\Http\Controllers\Api\V1\WebhookEndpointController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Connect\GoogleConnectController;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
@@ -142,7 +144,11 @@ if (app()->environment(['local', 'staging'])) {
 Route::prefix('v1/connect-sessions')->name('public.connect_sessions.')->group(function () {
     Route::get('{token}/info', [ConnectSessionController::class, 'info'])->name('info');
     Route::post('{token}/complete', [ConnectSessionController::class, 'complete'])->name('complete');
+    Route::get('{token}/google/authorize', [GoogleConnectController::class, 'authorizationUrl'])->name('google.authorize');
 });
+
+// OAuth callback de Google (redirect URI registrada en Google Cloud). Auth: `state` = JWT de la sesión.
+Route::get('oauth/google/callback', [GoogleConnectController::class, 'callback'])->name('oauth.google.callback');
 
 /*
 |--------------------------------------------------------------------------
@@ -168,4 +174,21 @@ Route::middleware(['auth:api-token', 'idempotency'])->prefix('v1')->name('public
     Route::post('connect-sessions', [ConnectSessionController::class, 'store'])
         ->middleware('scope:channels:write')
         ->name('connect_sessions.store');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Integraciones (Google Calendar) — API pública Y dashboard
+|--------------------------------------------------------------------------
+| Mismas rutas para ambos: `sk_` (con scopes) o Sanctum (dashboard humano).
+*/
+Route::middleware(['auth:api-token,sanctum', 'idempotency'])->prefix('v1/integrations')->name('public.v1.integrations.')->group(function () {
+    Route::get('/', [PublicIntegrationController::class, 'index'])->middleware('scope:integrations:read')->name('index');
+    Route::get('{integration}', [PublicIntegrationController::class, 'show'])->middleware('scope:integrations:read')->name('show');
+    Route::delete('{integration}', [PublicIntegrationController::class, 'destroy'])->middleware('scope:integrations:write')->name('destroy');
+
+    Route::get('{integration}/calendar/availability', [PublicIntegrationController::class, 'availability'])->middleware('scope:calendar:read')->name('calendar.availability');
+    Route::get('{integration}/calendar/events', [PublicIntegrationController::class, 'events'])->middleware('scope:calendar:read')->name('calendar.events');
+    Route::post('{integration}/calendar/events', [PublicIntegrationController::class, 'createEvent'])->middleware('scope:calendar:write')->name('calendar.events.store');
+    Route::delete('{integration}/calendar/events/{eventId}', [PublicIntegrationController::class, 'deleteEvent'])->middleware('scope:calendar:write')->name('calendar.events.destroy');
 });

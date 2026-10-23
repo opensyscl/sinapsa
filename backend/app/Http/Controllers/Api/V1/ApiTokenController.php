@@ -22,6 +22,8 @@ class ApiTokenController extends Controller
         'contacts:read', 'contacts:write',
         'channels:read', 'channels:write',
         'templates:read',
+        'integrations:read', 'integrations:write',
+        'calendar:read', 'calendar:write',
         'webhooks:read', 'webhooks:write',
     ];
 

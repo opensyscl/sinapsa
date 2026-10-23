@@ -18,10 +18,12 @@ class ConnectSessionResource extends JsonResource
             'display_label' => $this->display_label,
             'return_url' => $this->return_url,
             'client_metadata' => $this->client_metadata,
+            'end_user_id' => $this->end_user_id,
             'status' => $this->status,
             'expires_at' => $this->expires_at?->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),
             'completed_channel_id' => $this->completed_channel_id,
+            'completed_integration_id' => $this->completed_integration_id,
             'error_message' => $this->error_message,
             'created_at' => $this->created_at?->toIso8601String(),
         ];

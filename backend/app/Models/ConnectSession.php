@@ -24,8 +24,8 @@ class ConnectSession extends Model
 
     protected $fillable = [
         'workspace_id', 'api_token_id', 'jti',
-        'allowed_channel_types', 'display_label', 'return_url', 'client_metadata',
-        'status', 'expires_at', 'completed_at', 'completed_channel_id', 'error_message',
+        'allowed_channel_types', 'display_label', 'return_url', 'client_metadata', 'end_user_id',
+        'status', 'expires_at', 'completed_at', 'completed_channel_id', 'completed_integration_id', 'error_message',
         'client_ip', 'client_user_agent',
     ];
 
@@ -44,6 +44,11 @@ class ConnectSession extends Model
     public function channel(): BelongsTo
     {
         return $this->belongsTo(Channel::class, 'completed_channel_id');
+    }
+
+    public function integration(): BelongsTo
+    {
+        return $this->belongsTo(Integration::class, 'completed_integration_id');
     }
 
     public function isUsable(): bool

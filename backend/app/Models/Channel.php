@@ -28,11 +28,12 @@ class Channel extends Model
         'status', 'access_token_encrypted', 'refresh_token_encrypted',
         'token_expires_at', 'webhook_subscribed_at',
         'last_health_check_at', 'last_error_code', 'last_error_message',
-        'config',
+        'config', 'end_user_id', 'client_metadata',
     ];
 
     protected $casts = [
         'config' => 'array',
+        'client_metadata' => 'array',
         'token_expires_at' => 'datetime',
         'webhook_subscribed_at' => 'datetime',
         'last_health_check_at' => 'datetime',

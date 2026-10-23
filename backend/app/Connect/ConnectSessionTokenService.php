@@ -2,6 +2,7 @@
 
 namespace App\Connect;
 
+use App\Exceptions\ApiException;
 use App\Models\ConnectSession;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -63,6 +64,40 @@ class ConnectSessionTokenService
         }
 
         return $payload;
+    }
+
+    /**
+     * Decodifica el JWT y carga el ConnectSession DB. Lanza si:
+     *  - JWT inválido / firma incorrecta / expirado.
+     *  - jti no encontrado en DB.
+     *  - status != pending.
+     *  - DB expires_at en el pasado (defensa en profundidad).
+     */
+    public function resolve(string $token): ConnectSession
+    {
+        try {
+            $claims = $this->decode($token);
+        } catch (\Throwable $e) {
+            throw ApiException::authentication('invalid_session_token', $e->getMessage());
+        }
+
+        $session = ConnectSession::where('jti', $claims['jti'] ?? '__missing__')->first();
+        if (! $session) {
+            throw ApiException::authentication('session_not_found', 'Connect session not found.');
+        }
+
+        if ($session->status === ConnectSession::STATUS_COMPLETED) {
+            throw ApiException::invalidRequest(
+                'session_already_completed',
+                'This connect session has already been completed.',
+            );
+        }
+        if ($session->status === ConnectSession::STATUS_EXPIRED || $session->expires_at->isPast()) {
+            $session->forceFill(['status' => ConnectSession::STATUS_EXPIRED])->save();
+            throw ApiException::authentication('session_expired', 'Connect session expired.');
+        }
+
+        return $session;
     }
 
     public static function newJti(): string

@@ -82,7 +82,9 @@ createServer(async (req, res) => {
   try {
     if (req.method === "GET" && url.pathname === "/") {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-      return res.end(readFileSync(join(here, "index.html"), "utf8").replaceAll("http://localhost:3002", APP));
+      return res.end(
+        readFileSync(join(here, "index.html"), "utf8").replaceAll("http://localhost:3002", APP).replaceAll("__SINAPSA_API__", API),
+      );
     }
 
     if (!url.pathname.startsWith("/api/")) return send(res, 404, { error: "not found" });

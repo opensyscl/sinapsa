@@ -4,186 +4,257 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Web X · agenda para tu negocio (demo de Sinapsa)</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 28 28%22%3E%3Crect width=%2228%22 height=%2228%22 rx=%228%22 fill=%22%231d4ed8%22/%3E%3Crect x=%227%22 y=%227.5%22 width=%2214%22 height=%223%22 rx=%221.5%22 fill=%22%23fff%22/%3E%3Crect x=%227%22 y=%2212.5%22 width=%229%22 height=%223%22 rx=%221.5%22 fill=%22%23fff%22/%3E%3Crect x=%227%22 y=%2217.5%22 width=%2211.5%22 height=%223%22 rx=%221.5%22 fill=%22%23fff%22/%3E%3C/svg%3E" />
     <style>
+      /* Web X: un cliente SaaS ficticio, con su propia marca (no la de Sinapsa). */
       :root {
-        --bg: #f7f5f2; --card: #fff; --ink: #1c1917; --muted: #78716c; --line: #e7e5e4;
-        --brand: #ea580c; --brand-soft: #fff1e8; --ok: #15803d; --ok-soft: #dcfce7; --bad: #b91c1c; --bad-soft: #fee2e2;
+        --ground: #f4f5f7; --surface: #ffffff; --raised: #f8f9fb; --active: #eceef2;
+        --line: #e4e6ea; --rule: #eef0f3; --control: #cfd3da;
+        --ink: #15171a; --muted: #5c6370;
+        --brand: #1d4ed8; --brand-soft: #e8eefc; --brand-ink: #173aa3;
+        --ok: #247b50; --ok-soft: #dcfae5; --bad: #c4242a; --bad-soft: #ffedea;
+        --hour: 48px;
       }
       * { box-sizing: border-box; }
-      body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); font-size: 15px; }
-      button, input, select { font: inherit; }
-      button { cursor: pointer; border: 0; border-radius: 12px; padding: 10px 16px; font-weight: 600; }
+      body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--ground); color: var(--ink); font-size: 14px; line-height: 1.45; }
+      button, input, select { font: inherit; color: inherit; }
+      button { cursor: pointer; border: 0; background: none; }
       button:disabled { opacity: .5; cursor: default; }
-      .primary { background: var(--brand); color: #fff; }
-      .ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
-      .link { background: none; padding: 0; color: var(--brand); font-weight: 600; }
-      input, select { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
-      label { display: block; font-size: 13px; color: var(--muted); margin: 0 0 6px; }
-      .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 24px; }
+      :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+      .num { font-variant-numeric: tabular-nums; }
       .muted { color: var(--muted); }
-      .small { font-size: 13px; }
+      .small { font-size: 12px; }
       .hidden { display: none !important; }
-      .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
-      .pill.ok { background: var(--ok-soft); color: var(--ok); }
-      .pill.off { background: #f5f5f4; color: var(--muted); }
-      .pill.soon { background: #f5f5f4; color: #a8a29e; }
 
-      /* Layout */
-      header.top { background: #fff; border-bottom: 1px solid var(--line); }
-      header.top .in { max-width: 1080px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; gap: 24px; }
-      .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -.02em; }
-      .logo i { width: 30px; height: 30px; border-radius: 9px; background: var(--brand); color: #fff; display: grid; place-items: center; font-style: normal; font-size: 16px; }
-      nav.tabs { display: flex; gap: 4px; }
-      nav.tabs button { background: none; color: var(--muted); padding: 8px 14px; border-radius: 10px; }
-      nav.tabs button.on { background: var(--brand-soft); color: var(--brand); }
-      .who { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 14px; }
-      .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 700; }
-      main { max-width: 1080px; margin: 0 auto; padding: 32px 24px 160px; }
-      h1 { font-size: 28px; letter-spacing: -.02em; margin: 0 0 6px; }
-      h2 { font-size: 17px; margin: 0 0 4px; }
+      .btn { height: 36px; padding: 0 16px; border-radius: 999px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+      .btn.primary { background: var(--brand); color: #fff; }
+      .btn.primary:hover { background: var(--brand-ink); }
+      .btn.ghost { border: 1px solid var(--control); background: var(--surface); }
+      .btn.ghost:hover { background: var(--raised); }
+      .btn.text { padding: 0; height: auto; color: var(--muted); font-weight: 500; }
+      .btn.text:hover { color: var(--ink); }
+      input, select { width: 100%; height: 38px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+      label { display: block; font-size: 13px; font-weight: 500; margin: 0 0 6px; }
+      .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+
+      /* Marca de Web X: tres franjas de agenda */
+      .mark { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
 
       /* Bienvenida */
       .center { min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
-      .welcome { width: 100%; max-width: 440px; }
+      .welcome { width: 100%; max-width: 420px; padding: 32px; }
+      .welcome h1 { font-size: 26px; letter-spacing: -.02em; margin: 24px 0 8px; line-height: 1.15; }
+      .welcome form { display: grid; gap: 16px; margin-top: 24px; }
 
-      /* Elegir integraciones */
-      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin: 24px 0; }
-      .opt { position: relative; text-align: left; background: #fff; border: 2px solid var(--line); border-radius: 18px; padding: 18px; font-weight: 400; color: var(--ink); }
-      .opt.on { border-color: var(--brand); background: var(--brand-soft); }
-      .opt[disabled] { opacity: .55; }
-      .opt .ico { font-size: 22px; }
-      .opt .check { position: absolute; top: 14px; right: 14px; width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--line); background: #fff; display: grid; place-items: center; color: #fff; font-size: 13px; }
-      .opt.on .check { background: var(--brand); border-color: var(--brand); }
-      .opt strong { display: block; margin: 10px 0 2px; }
+      /* Barra */
+      header.top { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+      header.top .in { max-width: 1180px; margin: 0 auto; padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 32px; }
+      nav.tabs { display: flex; gap: 24px; align-self: stretch; }
+      nav.tabs button { color: var(--muted); border-bottom: 2px solid transparent; padding: 0; font-weight: 500; }
+      nav.tabs button.on { color: var(--ink); border-color: var(--ink); }
+      .who { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+      .mark { white-space: nowrap; }
+      @media (max-width: 600px) {
+        header.top .in { gap: 16px; padding: 0 16px; }
+        #who-name { display: none; }
+        main { padding: 24px 16px 120px; }
+      }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 24px 120px; }
+      .title-row { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+      h1 { font-size: 24px; letter-spacing: -.02em; margin: 0 0 4px; line-height: 1.2; }
+      h2 { font-size: 15px; font-weight: 600; margin: 0; }
+
+      /* Elegir */
+      .options { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 24px; }
+      .opt { position: relative; text-align: left; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); display: grid; gap: 4px; }
+      .opt:hover:not([disabled]) { border-color: var(--control); }
+      .opt.on { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+      .opt .box { position: absolute; top: 16px; right: 16px; width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--control); display: grid; place-items: center; color: #fff; }
+      .opt.on .box { background: var(--brand); border-color: var(--brand); }
+      .opt svg.ico { color: var(--muted); margin-bottom: 6px; }
+      .opt strong { font-size: 15px; }
+      .opt[disabled] { color: var(--muted); background: var(--raised); }
 
       /* Integraciones */
-      .list { display: grid; gap: 12px; margin-top: 20px; }
-      .row { display: flex; align-items: center; gap: 16px; }
-      .row .ico { width: 44px; height: 44px; border-radius: 12px; background: #f5f5f4; display: grid; place-items: center; font-size: 20px; flex-shrink: 0; }
-      .row .grow { flex: 1; min-width: 0; }
+      .rows { border-top: 1px solid var(--line); }
+      .irow { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 16px 0; border-bottom: 1px solid var(--rule); }
+      .irow svg { color: var(--muted); flex: none; }
+      .irow .grow { flex: 1; min-width: 200px; }
+      .state { font-size: 13px; color: var(--muted); }
+      .state.ok { color: var(--ok); font-weight: 500; }
 
       /* Agenda */
-      .days { display: flex; gap: 8px; overflow-x: auto; margin: 20px 0; }
-      .day { min-width: 74px; background: #fff; border: 1px solid var(--line); color: var(--ink); border-radius: 14px; padding: 10px; text-align: center; font-weight: 400; }
-      .day b { display: block; font-size: 20px; }
-      .day.on { background: var(--ink); color: #fff; border-color: var(--ink); }
-      .agenda { display: grid; grid-template-columns: 1fr 340px; gap: 16px; align-items: start; }
-      @media (max-width: 860px) { .agenda { grid-template-columns: 1fr; } nav.tabs { display: none; } }
-      .ev { display: flex; gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); align-items: center; }
-      .ev:first-child { border-top: 0; }
-      .ev .t { width: 92px; font-weight: 700; font-size: 14px; }
-      .ev .grow { flex: 1; min-width: 0; }
-      .ev .x { background: none; color: var(--muted); padding: 6px 10px; }
-      .busy { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-      .busy span { background: var(--bad-soft); color: var(--bad); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; }
-      .form { display: grid; gap: 12px; }
+      .days { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; }
+      .day { flex: none; width: 64px; padding: 8px 0 10px; border-radius: 12px; text-align: center; border: 1px solid transparent; }
+      .day:hover { background: var(--surface); border-color: var(--line); }
+      .day .wd { font-size: 12px; color: var(--muted); text-transform: capitalize; }
+      .day .dn { display: block; font-size: 18px; font-weight: 600; margin: 2px 0 4px; }
+      .day .ct { font-size: 11px; color: var(--muted); height: 14px; display: block; }
+      .day.on { background: var(--ink); color: #fff; }
+      .day.on .wd, .day.on .ct { color: #c9ccd2; }
+      .layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+      .tl-card { padding: 20px 20px 12px; }
+      .tl-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+      .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
+      .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+      .legend .sw-ev { background: var(--brand-soft); box-shadow: inset 3px 0 0 var(--brand); }
+      .legend .sw-bz { background: repeating-linear-gradient(135deg, #dfe2e7 0 2px, transparent 2px 6px); } /* taste-skill-ignore: trama, no degradado */
+      .timeline { position: relative; display: grid; grid-template-columns: 52px 1fr; }
+      .hours div { height: var(--hour); font-size: 12px; color: var(--muted); transform: translateY(-8px); }
+      .lane { position: relative; border-left: 1px solid var(--line); cursor: copy; }
+      .lane .hl { height: var(--hour); border-top: 1px solid var(--rule); }
+      .lane .past { position: absolute; left: 0; right: 0; top: 0; background: rgba(244, 245, 247, .7); pointer-events: none; }
+      .busy { position: absolute; left: 0; right: 0; background: repeating-linear-gradient(135deg, #dfe2e7 0 2px, transparent 2px 6px); pointer-events: none; } /* taste-skill-ignore: trama, no degradado */
+      .ev { position: absolute; left: 8px; right: 8px; background: var(--brand-soft); border-radius: 8px; box-shadow: inset 3px 0 0 var(--brand); padding: 4px 10px 4px 12px; overflow: hidden; cursor: default; display: flex; gap: 8px; }
+      .ev .t { font-weight: 600; font-size: 13px; color: var(--brand-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .ev .h { font-size: 12px; color: var(--brand-ink); opacity: .8; }
+      .ev .grow { min-width: 0; flex: 1; }
+      .ev .x { color: var(--brand-ink); opacity: .6; font-size: 13px; padding: 0 2px; align-self: flex-start; }
+      .ev .x:hover { opacity: 1; }
+      .ev.new { outline: 2px solid var(--brand); }
+      .ghost { position: absolute; left: 8px; right: 8px; border: 1.5px dashed var(--brand); border-radius: 8px; background: rgba(29, 78, 216, .06); pointer-events: none; padding: 4px 12px; font-size: 12px; font-weight: 600; color: var(--brand-ink); }
+      .now { position: absolute; left: -4px; right: 0; height: 0; border-top: 1.5px solid var(--bad); pointer-events: none; }
+      .now::before { content: ""; position: absolute; left: -1px; top: -4.5px; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
+      .form { padding: 20px; display: grid; gap: 14px; position: sticky; top: 72px; }
       .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-      .empty { text-align: center; padding: 40px 20px; }
-      .msg { font-size: 13px; padding: 10px 12px; border-radius: 12px; }
-      .msg.ok { background: var(--ok-soft); color: var(--ok); }
-      .msg.bad { background: var(--bad-soft); color: var(--bad); }
+      .note { font-size: 13px; padding: 10px 12px; border-radius: 10px; }
+      .note.ok { background: var(--ok-soft); color: #04250e; }
+      .note.bad { background: var(--bad-soft); color: #831c1e; }
+      .note.warn { background: #fffbeb; color: #92400e; }
+      .empty { padding: 48px 24px; text-align: center; }
+      .empty svg { color: var(--brand); }
+      .empty h2 { margin: 12px 0 6px; font-size: 18px; }
+      .empty p { max-width: 380px; margin: 0 auto 20px; }
 
       /* Por debajo */
-      .under { position: fixed; left: 0; right: 0; bottom: 0; background: #0c0a09; color: #e7e5e4; font-size: 13px; z-index: 10; }
-      .under .bar { max-width: 1080px; margin: 0 auto; padding: 10px 24px; display: flex; align-items: center; gap: 12px; }
-      .under .bar button { background: #292524; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 12px; }
-      .under .body { max-width: 1080px; margin: 0 auto; padding: 0 24px 16px; display: grid; grid-template-columns: 300px 1fr; gap: 12px; height: 300px; }
+      .under { position: fixed; left: 0; right: 0; bottom: 0; background: #111214; color: #e6e7ea; font-size: 13px; z-index: 10; }
+      .under .bar { max-width: 1180px; margin: 0 auto; padding: 10px 24px; display: flex; align-items: center; gap: 12px; }
+      .under .bar .dim { color: #9a9ea6; }
+      .under .bar button { margin-left: auto; color: #fff; background: #2a2c31; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+      .under .body { max-width: 1180px; margin: 0 auto; padding: 0 24px 16px; display: grid; grid-template-columns: 320px 1fr; gap: 12px; height: 320px; }
+      @media (max-width: 760px) { .under .body { grid-template-columns: 1fr; height: 420px; } }
       .under ul { list-style: none; margin: 0; padding: 0; overflow: auto; }
-      .under li { padding: 8px 10px; border-radius: 8px; cursor: pointer; font-family: ui-monospace, monospace; font-size: 12px; display: flex; gap: 8px; }
-      .under li.on, .under li:hover { background: #292524; }
+      .under li button { width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 12px; display: flex; gap: 8px; color: #e6e7ea; }
+      .under li button.on, .under li button:hover { background: #2a2c31; }
       .under li .s { margin-left: auto; }
       .under .s.ok { color: #4ade80; } .under .s.bad { color: #f87171; }
-      .under pre { margin: 0; overflow: auto; background: #1c1917; border-radius: 10px; padding: 12px; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+      .under .detail { min-width: 0; display: grid; grid-template-rows: auto 1fr; gap: 8px; }
+      .under .detail .acts { display: flex; gap: 8px; }
+      .under .detail .acts button { color: #fff; background: #2a2c31; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+      .under pre { margin: 0; overflow: auto; background: #1b1c20; border-radius: 10px; padding: 12px; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
     </style>
   </head>
   <body>
-    <!-- 1. Bienvenida -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M8 3v4M16 3v4M3 10h18" /></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" /></symbol>
+      <symbol id="i-cam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r=".8" fill="currentColor" /></symbol>
+      <symbol id="i-msg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z" /></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></symbol>
+      <symbol id="i-mark" viewBox="0 0 28 28"><rect width="28" height="28" rx="8" fill="#1d4ed8" /><rect x="7" y="7.5" width="14" height="3" rx="1.5" fill="#fff" /><rect x="7" y="12.5" width="9" height="3" rx="1.5" fill="#fff" opacity=".7" /><rect x="7" y="17.5" width="11.5" height="3" rx="1.5" fill="#fff" /></symbol>
+    </svg>
+
+    <!-- Bienvenida -->
     <section id="v-welcome" class="center hidden">
       <div class="welcome card">
-        <div class="logo" style="margin-bottom: 20px"><i>X</i> Web X</div>
-        <h1>La agenda de tu negocio</h1>
-        <p class="muted">Web X es una app de ejemplo. Por dentro usa <b>Sinapsa</b> para conectarse con Google Calendar y otras herramientas.</p>
-        <form id="f-welcome" class="form" style="margin-top: 20px">
-          <div><label for="name">¿Cómo te llamas?</label><input id="name" required maxlength="40" placeholder="Ana" /></div>
-          <button class="primary">Entrar</button>
+        <div class="mark"><svg width="28" height="28"><use href="#i-mark" /></svg> Web X</div>
+        <h1>La agenda de tu negocio, sincronizada con tu calendario</h1>
+        <p class="muted">Web X es una app de ejemplo. Por dentro usa <b>Sinapsa</b> para conectarse con Google Calendar, como lo haría tu propio producto.</p>
+        <form id="f-welcome">
+          <div><label for="name">Tu nombre</label><input id="name" required maxlength="40" autocomplete="given-name" /></div>
+          <button class="btn primary" style="justify-content: center">Entrar</button>
         </form>
       </div>
     </section>
 
-    <!-- App -->
     <div id="v-app" class="hidden">
       <header class="top">
         <div class="in">
-          <div class="logo"><i>X</i> Web X</div>
-          <nav class="tabs">
+          <div class="mark"><svg width="28" height="28"><use href="#i-mark" /></svg> Web X</div>
+          <nav class="tabs" aria-label="Secciones">
             <button data-tab="agenda">Agenda</button>
             <button data-tab="integraciones">Integraciones</button>
           </nav>
           <div class="who">
-            <span id="who-name"></span>
-            <div class="avatar" id="who-initial"></div>
-            <button class="link small" id="logout">Salir</button>
+            <span id="who-name" style="font-weight: 500"></span>
+            <button class="btn text" id="logout">Salir</button>
           </div>
         </div>
       </header>
 
       <main>
-        <!-- 2. Elegir qué necesita -->
+        <!-- Elegir herramientas -->
         <section id="t-elegir" class="hidden">
-          <h1>¿Qué herramientas usas?</h1>
-          <p class="muted">Marca lo que quieres conectar con Web X. Puedes cambiarlo cuando quieras.</p>
-          <div class="grid" id="options"></div>
-          <button class="primary" id="save-choice">Guardar</button>
-        </section>
-
-        <!-- 3. Integraciones -->
-        <section id="t-integraciones" class="hidden">
-          <div class="row">
-            <div class="grow">
-              <h1>Integraciones</h1>
-              <p class="muted" style="margin: 0">Conecta tus cuentas. Sinapsa se encarga del permiso y de la conexión.</p>
+          <div class="title-row">
+            <div>
+              <h1>¿Qué herramientas usas?</h1>
+              <p class="muted" style="margin: 0">Marca lo que quieres conectar con Web X. Puedes cambiarlo cuando quieras.</p>
             </div>
-            <button class="ghost" id="edit-choice">Cambiar selección</button>
           </div>
-          <div class="list" id="integrations"></div>
+          <div class="options" id="options"></div>
+          <button class="btn primary" id="save-choice">Guardar y seguir</button>
         </section>
 
-        <!-- 4. Agenda -->
-        <section id="t-agenda" class="hidden">
-          <h1>Agenda</h1>
-          <p class="muted" id="agenda-sub" style="margin: 0"></p>
+        <!-- Integraciones -->
+        <section id="t-integraciones" class="hidden">
+          <div class="title-row">
+            <div>
+              <h1>Integraciones</h1>
+              <p class="muted" style="margin: 0">Tus cuentas conectadas. Sinapsa pide el permiso y guarda la conexión; Web X nunca ve tu contraseña.</p>
+            </div>
+            <button class="btn ghost" id="edit-choice">Cambiar selección</button>
+          </div>
+          <div class="rows" id="integrations"></div>
+        </section>
 
-          <div id="agenda-empty" class="card empty hidden" style="margin-top: 20px">
-            <div id="empty-ico" style="color: var(--brand)"></div>
-            <h2 style="margin-top: 8px">Conecta tu Google Calendar</h2>
-            <p class="muted">Así Web X ve tus horarios ocupados y agenda citas directo en tu calendario.</p>
-            <button class="primary" id="agenda-connect">Conectar Google Calendar</button>
+        <!-- Agenda -->
+        <section id="t-agenda" class="hidden">
+          <div class="title-row">
+            <div>
+              <h1>Agenda</h1>
+              <p class="muted num" id="agenda-sub" style="margin: 0"></p>
+            </div>
+            <span class="muted small" id="agenda-sync"></span>
+          </div>
+
+          <div id="agenda-empty" class="card empty hidden">
+            <svg width="40" height="40"><use href="#i-cal" /></svg>
+            <h2>Conecta tu Google Calendar</h2>
+            <p class="muted">Web X verá tus horas ocupadas y agendará las citas directo en tu calendario.</p>
+            <button class="btn primary" id="agenda-connect">Conectar Google Calendar</button>
           </div>
 
           <div id="agenda-main" class="hidden">
-            <div class="days" id="days"></div>
-            <div class="agenda">
-              <div class="card">
-                <div class="row">
-                  <h2 class="grow" id="day-title"></h2>
-                  <button class="link small" id="reload">Actualizar</button>
+            <div class="days" id="days" role="tablist" aria-label="Días"></div>
+            <div class="layout">
+              <div class="card tl-card">
+                <div class="tl-head">
+                  <h2 id="day-title"></h2>
+                  <div class="legend"><span><i class="sw-ev"></i>Cita</span><span><i class="sw-bz"></i>Ocupado en tu calendario</span></div>
                 </div>
-                <div class="busy" id="busy"></div>
-                <div id="events" style="margin-top: 12px"></div>
+                <div id="day-error" class="note bad hidden" style="margin-bottom: 12px"></div>
+                <div class="timeline">
+                  <div class="hours num" id="hours"></div>
+                  <div class="lane" id="lane" title="Haz clic en una hora libre para agendar"></div>
+                </div>
               </div>
+
               <form class="card form" id="f-event">
                 <h2>Nueva cita</h2>
-                <div><label for="ev-title">Título</label><input id="ev-title" required value="Cita con cliente" /></div>
+                <p class="muted small" style="margin: -8px 0 0">Elige una hora libre en la agenda o escríbela aquí.</p>
+                <div><label for="ev-title">Título</label><input id="ev-title" required maxlength="120" value="Cita con cliente" /></div>
                 <div class="two">
-                  <div><label for="ev-time">Hora</label><input id="ev-time" type="time" required value="10:00" /></div>
+                  <div><label for="ev-time">Hora</label><input id="ev-time" type="time" required step="900" /></div>
                   <div>
                     <label for="ev-dur">Duración</label>
-                    <select id="ev-dur"><option value="30">30 min</option><option value="60">1 hora</option><option value="90">1 h 30</option></select>
+                    <select id="ev-dur"><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 hora</option><option value="90">1 h 30</option></select>
                   </div>
                 </div>
-                <div><label for="ev-guest">Invitar (opcional)</label><input id="ev-guest" type="email" placeholder="cliente@correo.com" /></div>
-                <button class="primary" id="ev-save">Agendar</button>
-                <div id="ev-msg" class="msg hidden"></div>
+                <div><label for="ev-guest">Invitar por email <span class="muted" style="font-weight: 400">(opcional)</span></label><input id="ev-guest" type="email" placeholder="cliente@correo.com" /></div>
+                <div id="ev-conflict" class="note warn hidden"></div>
+                <button class="btn primary" id="ev-save" style="justify-content: center">Agendar</button>
+                <div id="ev-msg" class="note hidden" role="status"></div>
               </form>
             </div>
           </div>
@@ -191,15 +262,18 @@
       </main>
 
       <!-- Lo que pasa por debajo -->
-      <div class="under">
+      <div class="under" aria-label="Llamadas a la API de Sinapsa">
         <div class="bar">
           <b>Por debajo · API de Sinapsa</b>
-          <span class="muted" id="under-count">Aún no hay llamadas</span>
-          <button id="under-toggle" style="margin-left: auto">Mostrar</button>
+          <span class="dim num" id="under-count">Aún no hay llamadas</span>
+          <button id="under-toggle" aria-expanded="false">Mostrar</button>
         </div>
         <div class="body hidden" id="under-body">
           <ul id="calls"></ul>
-          <pre id="call-detail">Elige una llamada para ver qué envió Web X a Sinapsa y qué respondió.</pre>
+          <div class="detail">
+            <div class="acts"><button id="copy-curl" disabled>Copiar como curl</button></div>
+            <pre id="call-detail">Elige una llamada para ver qué envió Web X a Sinapsa y qué respondió.</pre>
+          </div>
         </div>
       </div>
     </div>
@@ -208,22 +282,18 @@
     <script src="http://localhost:3002/sdk.js"></script>
     <script>
       const $ = (id) => document.getElementById(id);
+      const API_URL = "__SINAPSA_API__";
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const DAY_START = 8, DAY_END = 20; // horario visible por defecto
 
-      // Lo que Web X ofrece. Solo Google Calendar está listo en Sinapsa.
-      const ICON = {
-        cal: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>`,
-        chat: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>`,
-        cam: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor"/></svg>`,
-        msg: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg>`,
-      };
       const OPTIONS = [
-        { id: "google_calendar", name: "Google Calendar", text: "Tus horarios y citas.", ico: ICON.cal, ready: true },
-        { id: "whatsapp", name: "WhatsApp", text: "Recordatorios de citas.", ico: ICON.chat },
-        { id: "instagram", name: "Instagram", text: "Reservas por DM.", ico: ICON.cam },
-        { id: "messenger", name: "Messenger", text: "Mensajes de tu página.", ico: ICON.msg },
-        { id: "outlook", name: "Outlook Calendar", text: "Calendario de Microsoft.", ico: ICON.cal },
+        { id: "google_calendar", name: "Google Calendar", text: "Tus horas ocupadas y tus citas.", ico: "cal", ready: true },
+        { id: "whatsapp", name: "WhatsApp", text: "Recordatorios de citas.", ico: "chat" },
+        { id: "instagram", name: "Instagram", text: "Reservas por mensaje directo.", ico: "cam" },
+        { id: "messenger", name: "Messenger", text: "Mensajes de tu página.", ico: "msg" },
+        { id: "outlook", name: "Outlook Calendar", text: "Calendario de Microsoft.", ico: "cal" },
       ];
+      const icon = (id, size = 20, cls = "ico") => `<svg class="${cls}" width="${size}" height="${size}"><use href="#i-${id}" /></svg>`;
 
       // Usuario de Web X (vive en el navegador). Su id es el end_user_id en Sinapsa.
       const store = {
@@ -231,14 +301,22 @@
         set: (v) => localStorage.setItem("webx", JSON.stringify(v)),
       };
       let me = store.get();
-      let integrations = [];
       let tab = "agenda";
+      let choosing = false;
+      let draft = [];
+      let integrations = [];
       let day = startOfDay(new Date());
+      let range = { events: [], busy: [] }; // 14 días, cargados de una vez
+      let ghost = null; // {start, end} propuesto en la línea de tiempo
+      let justCreated = null;
       const calls = [];
 
       function startOfDay(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
-      const fmtTime = (iso) => new Date(iso).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
+      const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+      const sameDay = (a, b) => startOfDay(a).getTime() === startOfDay(b).getTime();
+      const hhmm = (d) => new Date(d).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
       const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+      const overlaps = (a, b) => new Date(a.start) < new Date(b.end) && new Date(b.start) < new Date(a.end);
 
       // Llama al backend de Web X, que a su vez llama a Sinapsa con su sk_
       async function api(method, path, body) {
@@ -253,38 +331,46 @@
         return { ok: r.ok, status: r.status, data: rest };
       }
 
-      // ---- Panel "Por debajo" ----
+      // ---------- Por debajo ----------
+      let activeCall = 0;
       function logCall(call, response) {
         calls.unshift({ ...call, response, at: new Date() });
-        $("under-count").textContent = `${calls.length} llamada${calls.length === 1 ? "" : "s"}`;
+        $("under-count").textContent = `${calls.length} llamada${calls.length === 1 ? "" : "s"} en esta sesión`;
         renderCalls(0);
       }
-      function renderCalls(active) {
-        $("calls").innerHTML = calls
-          .map((c, i) => `<li data-i="${i}" class="${i === active ? "on" : ""}">${c.method} ${esc(c.path.replace("/api/v1", "").split("?")[0])}<span class="s ${c.status < 400 ? "ok" : "bad"}">${c.status}</span></li>`)
-          .join("");
-        const c = calls[active];
-        if (c) {
-          $("call-detail").textContent =
-            `${c.method} https://api.sinapsahq.com${c.path}\nAuthorization: Bearer sk_live_… (solo en el servidor de Web X)\n\n` +
-            (c.body ? `→ Envío\n${JSON.stringify(c.body, null, 2)}\n\n` : "") +
-            `← Respuesta ${c.status}\n${JSON.stringify(c.response, null, 2)}`;
-        }
+      function renderCalls(i) {
+        activeCall = i;
+        $("calls").innerHTML = calls.map((c, n) => `<li><button data-i="${n}" class="${n === i ? "on" : ""}">${c.method} ${esc(c.path.replace("/api/v1", "").split("?")[0])}<span class="s ${c.status < 400 ? "ok" : "bad"}">${c.status}</span></button></li>`).join("");
+        const c = calls[i];
+        $("copy-curl").disabled = !c;
+        if (!c) return;
+        $("call-detail").textContent =
+          `${c.method} ${API_URL}${c.path}\nAuthorization: Bearer sk_live_…  (solo vive en el servidor de Web X)\n\n` +
+          (c.body ? `→ Envío\n${JSON.stringify(c.body, null, 2)}\n\n` : "") +
+          `← Respuesta ${c.status}\n${JSON.stringify(c.response, null, 2)}`;
       }
-      $("calls").onclick = (e) => { const li = e.target.closest("li"); if (li) renderCalls(Number(li.dataset.i)); };
+      $("calls").onclick = (e) => { const b = e.target.closest("button[data-i]"); if (b) renderCalls(Number(b.dataset.i)); };
+      $("copy-curl").onclick = async () => {
+        const c = calls[activeCall];
+        const curl = [`curl -X ${c.method} '${API_URL}${c.path}'`, `  -H 'Authorization: Bearer $SINAPSA_API_KEY'`, `  -H 'Accept: application/json'`]
+          .concat(c.body ? [`  -H 'Content-Type: application/json'`, `  -d '${JSON.stringify(c.body).replace(/'/g, "'\\''")}'`] : [])
+          .join(" \\\n");
+        await navigator.clipboard.writeText(curl).catch(() => {});
+        $("copy-curl").textContent = "Copiado";
+        setTimeout(() => ($("copy-curl").textContent = "Copiar como curl"), 1500);
+      };
       $("under-toggle").onclick = () => {
-        const body = $("under-body");
-        body.classList.toggle("hidden");
-        $("under-toggle").textContent = body.classList.contains("hidden") ? "Mostrar" : "Ocultar";
+        const hidden = $("under-body").classList.toggle("hidden");
+        $("under-toggle").textContent = hidden ? "Mostrar" : "Ocultar";
+        $("under-toggle").setAttribute("aria-expanded", String(!hidden));
       };
 
-      // ---- Navegación ----
+      // ---------- Navegación ----------
       function show() {
         $("v-welcome").classList.toggle("hidden", !!me);
         $("v-app").classList.toggle("hidden", !me);
-        if (!me) return;
+        if (!me) return $("name").focus();
         $("who-name").textContent = me.name;
-        $("who-initial").textContent = me.name.slice(0, 1).toUpperCase();
         const current = choosing || !me.wants ? "elegir" : tab;
         for (const t of ["elegir", "integraciones", "agenda"]) $("t-" + t).classList.toggle("hidden", t !== current);
         document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === current));
@@ -296,24 +382,23 @@
 
       $("f-welcome").onsubmit = (e) => {
         e.preventDefault();
-        const rand = crypto.getRandomValues(new Uint32Array(2)).reduce((s, n) => s + n.toString(36), "");
-        me = { id: "webx-" + rand.slice(0, 12).padEnd(8, "0"), name: $("name").value.trim(), wants: null };
+        const rand = Array.from(crypto.getRandomValues(new Uint8Array(10)), (n) => (n % 36).toString(36)).join("");
+        me = { id: "webx-" + rand, name: $("name").value.trim(), wants: null };
         store.set(me);
         show();
       };
       $("logout").onclick = () => { localStorage.removeItem("webx"); me = null; integrations = []; show(); };
 
-      // ---- Elegir ----
-      let draft = [];
-      let choosing = false;
+      // ---------- Elegir ----------
       function renderOptions() {
         $("options").innerHTML = OPTIONS.map((o) => `
-          <button class="opt ${draft.includes(o.id) ? "on" : ""}" data-id="${o.id}" ${o.ready ? "" : "disabled"}>
-            <span class="check">✓</span>
-            <span class="ico">${o.ico}</span>
+          <button class="opt ${draft.includes(o.id) ? "on" : ""}" data-id="${o.id}" ${o.ready ? "" : "disabled"} aria-pressed="${draft.includes(o.id)}">
+            <span class="box">${icon("check", 12, "")}</span>
+            ${icon(o.ico, 22)}
             <strong>${o.name}</strong>
-            <span class="small muted">${o.ready ? o.text : "Próximamente"}</span>
+            <span class="small muted">${o.ready ? o.text : "Próximamente en Sinapsa"}</span>
           </button>`).join("");
+        $("save-choice").disabled = !draft.length;
       }
       $("options").onclick = (e) => {
         const b = e.target.closest(".opt");
@@ -322,48 +407,39 @@
         draft = draft.includes(id) ? draft.filter((x) => x !== id) : [...draft, id];
         renderOptions();
       };
-      $("save-choice").onclick = () => {
-        me.wants = draft; store.set(me);
-        choosing = false; tab = "integraciones"; show();
-      };
+      $("save-choice").onclick = () => { me.wants = draft; store.set(me); choosing = false; tab = "integraciones"; show(); };
       $("edit-choice").onclick = () => { draft = [...(me.wants ?? [])]; choosing = true; show(); };
 
-      // ---- Integraciones ----
+      // ---------- Integraciones ----------
       async function loadIntegrations() {
         const r = await api("GET", "/api/integrations");
         integrations = (r.data.data ?? []).filter((i) => i.status === "connected");
-        return integrations;
       }
       const calendar = () => integrations.find((i) => i.products.includes("calendar"));
 
       async function renderIntegrations() {
         const box = $("integrations");
-        if (!me.wants.length) {
-          box.innerHTML = `<div class="card empty"><p class="muted">No marcaste ninguna herramienta.</p><button class="primary" onclick="document.getElementById('edit-choice').click()">Elegir herramientas</button></div>`;
-          return;
-        }
-        box.innerHTML = `<div class="card muted">Cargando…</div>`;
+        box.innerHTML = `<p class="muted" style="padding: 16px 0">Cargando…</p>`;
         await loadIntegrations();
         box.innerHTML = me.wants.map((id) => {
           const o = OPTIONS.find((x) => x.id === id);
           const conn = id === "google_calendar" ? calendar() : null;
-          return `<div class="card row">
-            <div class="ico">${o.ico}</div>
+          return `<div class="irow">
+            ${icon(o.ico)}
             <div class="grow">
-              <h2>${o.name} ${conn ? `<span class="pill ok">● Conectado</span>` : `<span class="pill off">Sin conectar</span>`}</h2>
-              <div class="small muted">${conn ? esc(conn.email) : o.text}</div>
+              <h2>${o.name}</h2>
+              <div class="small muted">${conn ? `${esc(conn.email)} · conectada el ${new Date(conn.created_at).toLocaleDateString("es")}` : o.text}</div>
             </div>
-            ${conn
-              ? `<button class="ghost" data-off="${conn.id}">Desconectar</button>`
-              : `<button class="primary" data-connect="${id}">Conectar</button>`}
+            <span class="state ${conn ? "ok" : ""}">${conn ? "Conectada" : "Sin conectar"}</span>
+            ${conn ? `<button class="btn ghost" data-off="${conn.id}">Desconectar</button>` : `<button class="btn primary" data-connect="${id}">Conectar</button>`}
           </div>`;
-        }).join("");
+        }).join("") || `<p class="muted" style="padding: 16px 0">No marcaste ninguna herramienta. <button class="btn text" onclick="document.getElementById('edit-choice').click()">Elegir</button></p>`;
       }
       $("integrations").onclick = async (e) => {
         const c = e.target.closest("[data-connect]");
         const off = e.target.closest("[data-off]");
         if (c) connect([c.dataset.connect]);
-        if (off && confirm("¿Desconectar? Web X dejará de ver tu calendario.")) {
+        if (off && confirm("¿Desconectar Google Calendar? Web X dejará de ver tu agenda y Sinapsa revocará el permiso.")) {
           off.disabled = true;
           await api("DELETE", `/api/integrations/${off.dataset.off}`);
           renderIntegrations();
@@ -374,100 +450,221 @@
       async function connect(types) {
         const r = await api("POST", "/api/connect-session", { types, name: me.name });
         if (!r.data.session_token) return alert(r.data.error?.message ?? "No se pudo iniciar la conexión");
-        const done = () => show();
-        Sinapsa.connect({ sessionToken: r.data.session_token, onSuccess: done, onCancel: done, onError: (err) => { alert(err?.message ?? "Error al conectar"); done(); } });
+        const done = () => { tab = "agenda"; show(); };
+        Sinapsa.connect({ sessionToken: r.data.session_token, onSuccess: done, onCancel: () => show(), onError: (err) => { alert(err?.message ?? "Error al conectar"); show(); } });
       }
       $("agenda-connect").onclick = () => connect(["google_calendar"]);
 
-      // ---- Agenda ----
+      // ---------- Agenda ----------
       async function renderAgenda() {
-        $("agenda-sub").textContent = "Cargando…";
+        $("agenda-sub").textContent = "Cargando tu agenda…";
         await loadIntegrations();
         const cal = calendar();
         $("agenda-empty").classList.toggle("hidden", !!cal);
         $("agenda-main").classList.toggle("hidden", !cal);
-        $("agenda-sub").textContent = cal ? `Sincronizada con ${cal.email}` : "Aún no conectas tu calendario.";
-        if (!cal) return;
+        $("agenda-sync").textContent = cal ? `Sincronizada con ${cal.email}` : "";
+        if (!cal) { $("agenda-sub").textContent = "Aún no conectas tu calendario."; return; }
+        await loadRange();
+        renderAll();
+      }
+
+      // Una llamada de eventos y una de disponibilidad para los 14 días
+      async function loadRange() {
+        const cal = calendar();
+        const from = startOfDay(new Date()), to = addDays(from, 14);
+        const q = new URLSearchParams({ time_min: from.toISOString(), time_max: to.toISOString(), limit: "250" });
+        const [ev, av] = await Promise.all([
+          api("GET", `/api/integrations/${cal.id}/events?${q}`),
+          api("GET", `/api/integrations/${cal.id}/availability?${new URLSearchParams({ time_min: from.toISOString(), time_max: to.toISOString() })}`),
+        ]);
+        range = {
+          events: (ev.data.data ?? []).filter((e) => !e.all_day),
+          allDay: (ev.data.data ?? []).filter((e) => e.all_day),
+          busy: Object.values(av.data.busy ?? {}).flat(),
+          error: !ev.ok ? ev.data.error?.message ?? "No se pudo leer el calendario" : null,
+        };
+      }
+
+      const eventsOn = (d) => range.events.filter((e) => sameDay(e.start, d));
+      const busyOn = (d) => range.busy.filter((b) => overlaps(b, { start: d, end: addDays(d, 1) }));
+
+      // Huecos libres de 30 min entre las 08:00 y las 20:00, desde ahora
+      function freeSlots(d, minutes = 30) {
+        const out = [];
+        const now = new Date();
+        for (let m = DAY_START * 60; m + minutes <= DAY_END * 60; m += 30) {
+          const start = new Date(d); start.setHours(0, m, 0, 0);
+          const slot = { start, end: new Date(start.getTime() + minutes * 60000) };
+          if (start < now) continue;
+          if (!busyOn(d).some((b) => overlaps(b, slot))) out.push(slot);
+        }
+        return out;
+      }
+
+      function renderAll() {
+        renderSubline();
         renderDays();
-        loadDay();
+        renderDay();
+        if (!$("ev-time").value) {
+          const first = freeSlots(day)[0];
+          if (first) setGhost(first.start);
+        }
+      }
+
+      function renderSubline() {
+        const today = startOfDay(new Date());
+        const n = eventsOn(today).length;
+        const next = freeSlots(today)[0] ?? freeSlots(addDays(today, 1))[0];
+        const nextTxt = next ? `próximo hueco libre ${sameDay(next.start, today) ? "hoy" : "mañana"} a las ${hhmm(next.start)}` : "sin huecos libres hoy ni mañana";
+        $("agenda-sub").textContent = `Hoy tienes ${n} cita${n === 1 ? "" : "s"} · ${nextTxt}`;
       }
 
       function renderDays() {
         const today = startOfDay(new Date());
         $("days").innerHTML = Array.from({ length: 14 }, (_, i) => {
-          const d = new Date(today); d.setDate(d.getDate() + i);
-          const on = d.getTime() === day.getTime();
-          return `<button class="day ${on ? "on" : ""}" data-t="${d.getTime()}">
-            <span class="small">${d.toLocaleDateString("es", { weekday: "short" })}</span><b>${d.getDate()}</b>
+          const d = addDays(today, i);
+          const n = eventsOn(d).length;
+          const on = sameDay(d, day);
+          return `<button class="day ${on ? "on" : ""}" role="tab" aria-selected="${on}" data-t="${d.getTime()}">
+            <span class="wd">${i === 0 ? "hoy" : d.toLocaleDateString("es", { weekday: "short" }).replace(".", "")}</span>
+            <span class="dn num">${d.getDate()}</span>
+            <span class="ct num">${n ? `${n} cita${n === 1 ? "" : "s"}` : ""}</span>
           </button>`;
         }).join("");
       }
-      $("days").onclick = (e) => { const b = e.target.closest(".day"); if (!b) return; day = new Date(Number(b.dataset.t)); renderDays(); loadDay(); };
-      $("reload").onclick = () => loadDay();
+      $("days").onclick = (e) => {
+        const b = e.target.closest(".day");
+        if (!b) return;
+        day = new Date(Number(b.dataset.t));
+        ghost = null; $("ev-time").value = "";
+        renderAll();
+      };
 
-      async function loadDay() {
-        const cal = calendar();
-        const end = new Date(day); end.setDate(end.getDate() + 1);
-        const range = new URLSearchParams({ time_min: day.toISOString(), time_max: end.toISOString() });
-        $("day-title").textContent = day.toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" });
-        $("events").innerHTML = `<p class="muted small">Cargando…</p>`;
-        $("busy").innerHTML = "";
-
-        const [ev, av] = await Promise.all([
-          api("GET", `/api/integrations/${cal.id}/events?${range}`),
-          api("GET", `/api/integrations/${cal.id}/availability?${range}`),
-        ]);
-
-        const busy = Object.values(av.data.busy ?? {}).flat();
-        $("busy").innerHTML = busy.length
-          ? busy.map((b) => `<span>Ocupado ${fmtTime(b.start)}–${fmtTime(b.end)}</span>`).join("")
-          : `<span style="background: var(--ok-soft); color: var(--ok)">Día libre</span>`;
-
-        if (!ev.ok) {
-          $("events").innerHTML = `<div class="msg bad">${esc(ev.data.error?.message ?? "No se pudo leer el calendario")}</div>`;
-          return;
+      // Horario visible: 08–20, ampliado si hay citas fuera
+      function hoursFor(d) {
+        let from = DAY_START, to = DAY_END;
+        for (const e of eventsOn(d)) {
+          from = Math.min(from, new Date(e.start).getHours());
+          to = Math.max(to, Math.min(24, new Date(e.end).getHours() + 1));
         }
-        const items = ev.data.data ?? [];
-        $("events").innerHTML = items.length
-          ? items.map((e) => `<div class="ev">
-              <div class="t">${e.all_day ? "Todo el día" : `${fmtTime(e.start)}<br><span class="muted small">${fmtTime(e.end)}</span>`}</div>
-              <div class="grow"><b>${esc(e.summary ?? "(sin título)")}</b>${e.html_link ? `<div class="small"><a href="${esc(e.html_link)}" target="_blank" rel="noreferrer" class="muted">Ver en Google</a></div>` : ""}</div>
-              <button class="x" title="Borrar" data-del="${esc(e.id)}">✕</button>
-            </div>`).join("")
-          : `<p class="muted">No tienes citas este día.</p>`;
+        return { from, to };
       }
 
-      $("events").onclick = async (e) => {
+      function renderDay() {
+        const { from, to } = hoursFor(day);
+        const H = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--hour"));
+        const y = (t) => ((new Date(t) - new Date(day)) / 3600000 - from) * H;
+        const clampY = (t) => Math.max(0, Math.min((to - from) * H, y(t)));
+        const title = day.toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" });
+        $("day-title").textContent = title.charAt(0).toUpperCase() + title.slice(1);
+        $("day-error").classList.toggle("hidden", !range.error);
+        $("day-error").textContent = range.error ?? "";
+
+        $("hours").innerHTML = Array.from({ length: to - from }, (_, i) => `<div>${String(from + i).padStart(2, "0")}:00</div>`).join("");
+        const lane = $("lane");
+        lane.dataset.from = from;
+        let html = Array.from({ length: to - from }, () => `<div class="hl"></div>`).join("");
+
+        const now = new Date();
+        if (sameDay(now, day)) html += `<div class="past" style="height:${clampY(now)}px"></div>`;
+        else if (day < startOfDay(now)) html += `<div class="past" style="height:100%"></div>`;
+
+        for (const b of busyOn(day)) {
+          const top = clampY(b.start), bottom = clampY(b.end);
+          if (bottom > top) html += `<div class="busy" style="top:${top}px;height:${bottom - top}px"></div>`;
+        }
+        for (const e of eventsOn(day)) {
+          const top = y(e.start), h = Math.max(22, y(e.end) - top - 2);
+          html += `<div class="ev ${justCreated === e.id ? "new" : ""}" style="top:${top + 1}px;height:${h}px" title="${esc(e.summary ?? "")}">
+            <div class="grow"><div class="t">${esc(e.summary ?? "(sin título)")}</div>${h > 34 ? `<div class="h num">${hhmm(e.start)}–${hhmm(e.end)}</div>` : ""}</div>
+            <button type="button" class="x" data-del="${esc(e.id)}" aria-label="Borrar ${esc(e.summary ?? "cita")}">✕</button>
+          </div>`;
+        }
+        if (ghost && sameDay(ghost.start, day)) {
+          html += `<div class="ghost num" style="top:${y(ghost.start) + 1}px;height:${y(ghost.end) - y(ghost.start) - 2}px">${hhmm(ghost.start)}–${hhmm(ghost.end)} · nueva cita</div>`;
+        }
+        if (sameDay(now, day) && now.getHours() >= from && now.getHours() < to) html += `<div class="now" style="top:${y(now)}px"></div>`;
+        lane.innerHTML = html;
+        checkConflict();
+      }
+
+      // Clic en la línea de tiempo → propone una cita en esa media hora
+      $("lane").onclick = (e) => {
+        if (e.target.closest(".ev")) return;
+        const H = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--hour"));
+        const rect = $("lane").getBoundingClientRect();
+        const minutes = Math.floor(((e.clientY - rect.top) / H) * 2) * 30 + Number($("lane").dataset.from) * 60;
+        const start = new Date(day); start.setHours(0, minutes, 0, 0);
+        if (start < new Date()) return;
+        setGhost(start);
+        $("ev-title").focus();
+      };
+
+      function setGhost(start) {
+        const dur = Number($("ev-dur").value);
+        ghost = { start, end: new Date(start.getTime() + dur * 60000) };
+        $("ev-time").value = hhmm(start);
+        renderDay();
+      }
+      function ghostFromForm() {
+        if (!$("ev-time").value) { ghost = null; return renderDay(); }
+        const [h, m] = $("ev-time").value.split(":").map(Number);
+        const start = new Date(day); start.setHours(h, m, 0, 0);
+        setGhost(start);
+      }
+      $("ev-time").onchange = ghostFromForm;
+      $("ev-dur").onchange = ghostFromForm;
+
+      function checkConflict() {
+        const box = $("ev-conflict");
+        const clash = ghost && busyOn(day).some((b) => overlaps(b, ghost));
+        const past = ghost && ghost.start < new Date();
+        box.classList.toggle("hidden", !clash && !past);
+        box.textContent = past ? "Esa hora ya pasó." : clash ? "Ya tienes algo a esa hora en tu calendario. Puedes agendar igual." : "";
+      }
+
+      $("lane").addEventListener("click", async (e) => {
         const b = e.target.closest("[data-del]");
-        if (!b || !confirm("¿Borrar esta cita de tu Google Calendar?")) return;
+        if (!b) return;
+        e.stopPropagation();
+        if (!confirm("¿Borrar esta cita de tu Google Calendar?")) return;
         b.disabled = true;
         await api("DELETE", `/api/integrations/${calendar().id}/events/${encodeURIComponent(b.dataset.del)}`);
-        loadDay();
-      };
+        await loadRange();
+        renderAll();
+      });
 
       $("f-event").onsubmit = async (e) => {
         e.preventDefault();
-        const [h, m] = $("ev-time").value.split(":").map(Number);
-        const start = new Date(day); start.setHours(h, m, 0, 0);
-        const end = new Date(start.getTime() + Number($("ev-dur").value) * 60000);
+        ghostFromForm();
+        if (!ghost) return;
         const guest = $("ev-guest").value.trim();
         $("ev-save").disabled = true;
+        $("ev-save").textContent = "Agendando…";
         const r = await api("POST", `/api/integrations/${calendar().id}/events`, {
           summary: $("ev-title").value,
-          start: start.toISOString(),
-          end: end.toISOString(),
+          start: ghost.start.toISOString(),
+          end: ghost.end.toISOString(),
           time_zone: tz,
           ...(guest ? { attendees: [{ email: guest }] } : {}),
         });
         $("ev-save").disabled = false;
+        $("ev-save").textContent = "Agendar";
         const msg = $("ev-msg");
         msg.classList.remove("hidden", "ok", "bad");
         msg.classList.add(r.ok ? "ok" : "bad");
-        msg.textContent = r.ok ? "Cita agendada en tu Google Calendar." : r.data.error?.message ?? "No se pudo agendar";
-        if (r.ok) loadDay();
+        msg.textContent = r.ok
+          ? `Agendada el ${ghost.start.toLocaleDateString("es", { weekday: "long", day: "numeric" })} a las ${hhmm(ghost.start)} en tu Google Calendar.${guest ? ` Invitación enviada a ${guest}.` : ""}`
+          : r.data.error?.message ?? "No se pudo agendar";
+        if (r.ok) {
+          justCreated = r.data.id;
+          ghost = null; $("ev-time").value = ""; $("ev-guest").value = "";
+          await loadRange();
+          renderAll();
+        }
       };
 
-      $("empty-ico").innerHTML = ICON.cal.replaceAll('"22"', '"36"');
+      draft = me?.wants ? [...me.wants] : [];
       show();
     </script>
   </body>

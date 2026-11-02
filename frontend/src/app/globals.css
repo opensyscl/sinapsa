@@ -43,7 +43,9 @@
 /* ─────────────────────────────────────────────────────────────
    Tema Sinapsa — sobrio, blanco, acentos negros.
    NO usar gradientes chillones ni "AI button look".
-   Cards: rounded-3xl border border-border (NO rounded-2xl shadow-sm).
+   Panel (estilo "framed sheet" de taste-skill): marco lavanda muy suave
+   (--frame) con el menú, contenido en una hoja blanca; cards rounded-lg
+   border border-border, sin sombra. El color de datos (--data) solo en datos.
    ─────────────────────────────────────────────────────────────*/
 :root {
   --background: #ffffff;
@@ -63,6 +65,12 @@
   --warning: #b45309;
   --destructive: #b91c1c;
   --destructive-foreground: #ffffff;
+
+  /* Panel */
+  --frame: #f6f6f9;      /* marco del panel: un paso de la lavanda de marca */
+  --active: #e9e9ee;     /* ítem activo del menú, fila seleccionada */
+  --rule: #f1f1f4;       /* filas de tablas y listas */
+  --data: #1b6c80;       /* la serie principal de cada gráfico */
 }
 
 @theme inline {
@@ -83,6 +91,10 @@
   --color-warning: var(--warning);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-frame: var(--frame);
+  --color-active: var(--active);
+  --color-rule: var(--rule);
+  --color-data: var(--data);
   --font-sans: "Euclid Circular B", system-ui, -apple-system, sans-serif;
 }
 

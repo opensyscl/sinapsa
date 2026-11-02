@@ -43,3 +43,18 @@ export function useDisconnectIntegration() {
     onSuccess: () => qc.invalidateQueries({ queryKey: integrationKeys.all }),
   });
 }
+
+/** Abre la Hosted Connect Page de Sinapsa para conectar Google Calendar desde el dashboard. */
+export function useConnectGoogleCalendar() {
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post<{ hosted_url: string }>("/api/v1/connect-sessions", {
+        allowed_channel_types: ["google_calendar"],
+        display_label: "Sinapsa",
+        return_url: `${window.location.origin}/canales?tipo=google_calendar`,
+      });
+      return data.hosted_url;
+    },
+    onSuccess: (url) => window.location.assign(url),
+  });
+}

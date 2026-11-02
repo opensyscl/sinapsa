@@ -11,6 +11,8 @@ class Workspace extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const STATUS_ACTIVE = 'active';
+
     protected $fillable = [
         'slug', 'name', 'status', 'plan_code', 'billing_cycle',
         'trial_ends_at', 'current_period_ends_at',

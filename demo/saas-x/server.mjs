@@ -1,8 +1,11 @@
 // "Web X": un cliente SaaS de mentira que integra Sinapsa como lo haría uno real.
+// Es lo que se publica en playground.sinapsahq.com.
 // - El backend (este archivo) guarda la sk_ y habla con la API de Sinapsa.
 // - El frontend (index.html) solo recibe el session_token y usa el sdk.js de Sinapsa.
+// - Cada visitante es un "usuario de Web X" (id aleatorio en su navegador) = end_user_id en Sinapsa.
 //
 //   SINAPSA_API_KEY=sk_test_xxx node demo/saas-x/server.mjs   → http://localhost:4010
+//   Contra producción: SINAPSA_API_URL=https://api.sinapsahq.com SINAPSA_APP_URL=https://app.sinapsahq.com
 import { createServer } from "node:http";
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -21,11 +24,16 @@ if (existsSync(envFile)) {
 
 const PORT = Number(process.env.PORT ?? 4010);
 const API = process.env.SINAPSA_API_URL ?? "http://localhost:48000";
+// De dónde se carga el sdk.js (el frontend de Sinapsa)
+const APP = process.env.SINAPSA_APP_URL ?? "http://localhost:3002";
 const KEY = process.env.SINAPSA_API_KEY;
 if (!KEY) {
   console.error("Falta SINAPSA_API_KEY (sk_test_... o sk_live_...)");
   process.exit(1);
 }
+
+// Lo que Web X ofrece a sus usuarios. Solo Google Calendar está listo en Sinapsa.
+const CONNECTABLE = ["google_calendar"];
 
 async function sinapsa(method, path, body) {
   const res = await fetch(`${API}/api/v1${path}`, {
@@ -51,46 +59,78 @@ function send(res, status, data) {
   res.end(JSON.stringify(data));
 }
 
+// Cada respuesta lleva la llamada real a Sinapsa, para el panel "Qué pasó por debajo"
+function sendCall(res, call, r) {
+  send(res, r.status, { ...r.data, _sinapsa: { ...call, status: r.status } });
+}
+
+// Usuario de Web X: viene en la cabecera, generado en el navegador
+const USER_RE = /^webx-[a-z0-9]{8,32}$/;
+function userOf(req) {
+  const id = req.headers["x-webx-user"];
+  return typeof id === "string" && USER_RE.test(id) ? id : null;
+}
+
+// Solo se puede tocar una integración del propio usuario
+async function ownIntegration(id, user) {
+  const r = await sinapsa("GET", `/integrations/${id}`);
+  return r.status === 200 && r.data.end_user_id === user;
+}
+
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   try {
     if (req.method === "GET" && url.pathname === "/") {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-      return res.end(readFileSync(join(here, "index.html")));
+      return res.end(readFileSync(join(here, "index.html"), "utf8").replaceAll("http://localhost:3002", APP));
     }
 
-    // 1) El usuario de Web X quiere conectar su calendario → pedimos una Connect Session
+    if (!url.pathname.startsWith("/api/")) return send(res, 404, { error: "not found" });
+
+    const user = userOf(req);
+    if (!user) return send(res, 401, { error: { message: "Falta el usuario de Web X" } });
+
+    // 1) El usuario quiere conectar algo → pedimos una Connect Session con la sk_
     if (req.method === "POST" && url.pathname === "/api/connect-session") {
-      const { user_id } = await readJson(req);
-      const r = await sinapsa("POST", "/connect-sessions", {
-        allowed_channel_types: ["google_calendar"],
-        display_label: "Conecta tu Google Calendar con Web X",
-        end_user_id: user_id,
-        client_metadata: { user_id },
-      });
-      return send(res, r.status, { session_token: r.data.session_token, error: r.data.error });
+      const { types = [], name } = await readJson(req);
+      const allowed = types.filter((t) => CONNECTABLE.includes(t));
+      if (!allowed.length) return send(res, 422, { error: { message: "Nada que conectar" } });
+      const body = {
+        allowed_channel_types: allowed,
+        display_label: "Web X",
+        end_user_id: user,
+        client_metadata: { name: String(name ?? "").slice(0, 60) },
+      };
+      const r = await sinapsa("POST", "/connect-sessions", body);
+      return sendCall(res, { method: "POST", path: "/api/v1/connect-sessions", body }, r);
     }
 
-    // 2) Proxy a la API de Sinapsa (la sk_ nunca llega al browser)
+    // 2) Integraciones de ESTE usuario
     if (req.method === "GET" && url.pathname === "/api/integrations") {
-      const r = await sinapsa("GET", "/integrations?provider=google");
-      return send(res, r.status, r.data);
+      const path = `/integrations?end_user_id=${encodeURIComponent(user)}`;
+      const r = await sinapsa("GET", path);
+      return sendCall(res, { method: "GET", path: `/api/v1${path}` }, r);
     }
 
-    const m = url.pathname.match(/^\/api\/integrations\/(\d+)\/(availability|events)$/);
+    const m = url.pathname.match(/^\/api\/integrations\/(\d+)(?:\/(availability|events)(?:\/([\w-]+))?)?$/);
     if (m) {
-      const [, id, action] = m;
-      if (action === "availability" && req.method === "GET") {
-        const r = await sinapsa("GET", `/integrations/${id}/calendar/availability?${url.searchParams}`);
-        return send(res, r.status, r.data);
-      }
-      if (action === "events" && req.method === "GET") {
-        const r = await sinapsa("GET", `/integrations/${id}/calendar/events?${url.searchParams}`);
-        return send(res, r.status, r.data);
-      }
-      if (action === "events" && req.method === "POST") {
-        const r = await sinapsa("POST", `/integrations/${id}/calendar/events`, await readJson(req));
-        return send(res, r.status, r.data);
+      const [, id, action, eventId] = m;
+      if (!(await ownIntegration(id, user))) return send(res, 404, { error: { message: "No es tuya" } });
+
+      let call;
+      if (!action && req.method === "DELETE") call = { method: "DELETE", path: `/integrations/${id}` };
+      else if (action === "availability" && req.method === "GET")
+        call = { method: "GET", path: `/integrations/${id}/calendar/availability?${url.searchParams}` };
+      else if (action === "events" && !eventId && req.method === "GET")
+        call = { method: "GET", path: `/integrations/${id}/calendar/events?${url.searchParams}` };
+      else if (action === "events" && !eventId && req.method === "POST")
+        call = { method: "POST", path: `/integrations/${id}/calendar/events`, body: await readJson(req) };
+      else if (action === "events" && eventId && req.method === "DELETE")
+        call = { method: "DELETE", path: `/integrations/${id}/calendar/events/${eventId}` };
+
+      if (call) {
+        const r = await sinapsa(call.method, call.path, call.body);
+        return sendCall(res, { ...call, path: `/api/v1${call.path}` }, r);
       }
     }
 

@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -9,6 +11,7 @@ import {
   FacebookIcon,
   PlusSignIcon,
   RefreshIcon,
+  Activity01Icon,
   Cancel01Icon,
   CheckmarkCircle01Icon,
   AlertCircleIcon,
@@ -17,9 +20,9 @@ import {
   Calendar03Icon,
   UserIcon,
 } from "@hugeicons/core-free-icons";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonVariants } from "@/components/ui/Button";
+import { Page, PageHeader } from "@/components/app/Page";
 import { Badge } from "@/components/ui/Badge";
-import { Card, CardHeader } from "@/components/ui/Card";
 import {
   useChannels,
   useDisconnectChannel,
@@ -77,16 +80,14 @@ function FilterChip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors",
-        active
-          ? "border-foreground bg-foreground text-background"
-          : "border-border bg-background text-foreground hover:bg-muted",
+        "inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-sm transition-colors",
+        active ? "bg-active font-medium text-foreground" : "text-muted-foreground hover:text-foreground",
         !active && count === 0 && "text-muted-foreground",
       )}
     >
       {icon && <HugeiconsIcon icon={icon} size={14} />}
       {label}
-      <span className={active ? "text-background/70" : "text-muted-foreground"}>{count}</span>
+      <span className="text-muted-foreground tabular-nums">{count}</span>
     </button>
   );
 }
@@ -133,15 +134,13 @@ function ChannelRow({ channel }: { channel: Channel }) {
   const Icon = channelIcon[channel.type] ?? WhatsappIcon;
 
   return (
-    <Card className="p-5">
-      <div className="flex flex-wrap items-start gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
-          <HugeiconsIcon icon={Icon} size={22} />
-        </div>
+    <div className="py-4">
+      <div className="flex flex-wrap items-start gap-3">
+        <HugeiconsIcon icon={Icon} size={18} className="mt-0.5 text-muted-foreground" />
 
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-base font-semibold tracking-tight">{channel.display_name}</h3>
+            <h3 className="text-sm font-medium">{channel.display_name}</h3>
             <StatusBadge status={channel.status} />
             {channel.config?.connected_via === "manual" && (
               <Badge tone="outline">manual</Badge>
@@ -165,7 +164,7 @@ function ChannelRow({ channel }: { channel: Channel }) {
             )}
           </p>
           {channel.status === "error" && channel.last_error_message && (
-            <p className="mt-2 rounded-2xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            <p className="mt-2 rounded-md bg-destructive/5 px-3 py-2 text-xs text-destructive">
               {channel.last_error_code ? `[${channel.last_error_code}] ` : ""}
               {channel.last_error_message}
             </p>
@@ -173,6 +172,7 @@ function ChannelRow({ channel }: { channel: Channel }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <LogsLink query={`channel_id=${channel.id}`} />
           <Button
             variant="outline"
             size="sm"
@@ -222,7 +222,7 @@ function ChannelRow({ channel }: { channel: Channel }) {
           </Button>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -231,15 +231,13 @@ function IntegrationRow({ integration }: { integration: Integration }) {
   const label = integration.display_name ?? integration.email ?? `Google #${integration.id}`;
 
   return (
-    <Card className="p-5">
-      <div className="flex flex-wrap items-start gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
-          <HugeiconsIcon icon={GoogleIcon} size={22} />
-        </div>
+    <div className="py-4">
+      <div className="flex flex-wrap items-start gap-3">
+        <HugeiconsIcon icon={GoogleIcon} size={18} className="mt-0.5 text-muted-foreground" />
 
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-base font-semibold tracking-tight">{label}</h3>
+            <h3 className="text-sm font-medium">{label}</h3>
             <StatusBadge status={integration.status} />
             <EndUserBadge id={integration.end_user_id} />
           </div>
@@ -251,38 +249,64 @@ function IntegrationRow({ integration }: { integration: Integration }) {
             Conectado {dayjs(integration.created_at).format("DD/MM/YYYY HH:mm")}
           </p>
           {integration.status === "error" && integration.last_error_message && (
-            <p className="mt-2 rounded-2xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            <p className="mt-2 rounded-md bg-destructive/5 px-3 py-2 text-xs text-destructive">
               {integration.last_error_code ? `[${integration.last_error_code}] ` : ""}
               {integration.last_error_message}
             </p>
           )}
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            if (!confirm(`¿Desconectar "${label}"? Se revoca el acceso en Google.`)) return;
-            disconnect.mutate(integration.id, {
-              onSuccess: () => toast.success("Integración desconectada"),
-            });
-          }}
-          disabled={disconnect.isPending}
-        >
-          <HugeiconsIcon icon={Cancel01Icon} size={14} />
-          Desconectar
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <LogsLink query={`integration_id=${integration.id}`} />
+          <Link href="/probar-api" className={buttonVariants({ variant: "outline", size: "sm" })}>
+            Probar
+          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (!confirm(`¿Desconectar "${label}"? Se revoca el acceso en Google.`)) return;
+              disconnect.mutate(integration.id, {
+                onSuccess: () => toast.success("Integración desconectada"),
+              });
+            }}
+            disabled={disconnect.isPending}
+          >
+            <HugeiconsIcon icon={Cancel01Icon} size={14} />
+            Desconectar
+          </Button>
+        </div>
       </div>
-    </Card>
+    </div>
+  );
+}
+
+function LogsLink({ query }: { query: string }) {
+  return (
+    <Link href={`/registros?${query}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+      <HugeiconsIcon icon={Activity01Icon} size={14} />
+      Registros
+    </Link>
   );
 }
 
 export default function ChannelsPage() {
+  return (
+    <Suspense>
+      <ChannelsView />
+    </Suspense>
+  );
+}
+
+function ChannelsView() {
   const [open, setOpen] = useState(false);
   const channels = useChannels();
   const integrations = useIntegrations();
   const [endUser, setEndUser] = useState<string>(ALL);
-  const [type, setType] = useState<TypeFilter>(ALL);
+  const tipo = useSearchParams().get("tipo");
+  const [type, setType] = useState<TypeFilter>(
+    TYPE_FILTERS.some((f) => f.id === tipo) ? (tipo as TypeFilter) : ALL,
+  );
 
   // Usuarios finales con algo conectado, y cuántas conexiones tiene cada uno
   const endUsers = useMemo(() => {
@@ -325,20 +349,21 @@ export default function ChannelsPage() {
   const isEmpty = !isLoading && !channels.data?.length && !integrations.data?.length;
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-6 py-10">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Canales</h1>
-          <p className="text-sm text-muted-foreground">
-            Todo lo que tienen conectado tus usuarios: WhatsApp, Instagram, Messenger y Google Calendar.
-          </p>
-        </div>
-
-        <Button onClick={() => setOpen(true)}>
-          <HugeiconsIcon icon={PlusSignIcon} size={16} />
-          Conectar canal
-        </Button>
-      </div>
+    <Page className="gap-6">
+      <PageHeader
+        title="Conexiones"
+        subtitle={
+          isLoading
+            ? "Cargando…"
+            : `${(channels.data?.length ?? 0) + (integrations.data?.length ?? 0)} cuentas conectadas por tus usuarios: WhatsApp, Instagram, Messenger y Google Calendar.`
+        }
+        actions={
+          <Button size="sm" onClick={() => setOpen(true)}>
+            <HugeiconsIcon icon={PlusSignIcon} size={14} />
+            Conectar canal
+          </Button>
+        }
+      />
 
       {!isEmpty && !isLoading && (
         <div className="space-y-3">
@@ -381,40 +406,35 @@ export default function ChannelsPage() {
       )}
 
       {isLoading && (
-        <Card className="p-8 text-center text-sm text-muted-foreground">Cargando…</Card>
+        <p className="text-sm text-muted-foreground">Cargando…</p>
       )}
 
       {isEmpty && (
-        <Card className="p-10 text-center">
-          <CardHeader className="space-y-3 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
-              <HugeiconsIcon icon={WhatsappIcon} size={22} />
-            </div>
-            <h3 className="text-lg font-semibold tracking-tight">Sin canales todavía</h3>
-            <p className="text-sm text-muted-foreground">
-              Conecta tu primer canal para empezar a operar la bandeja.
-            </p>
-            <div className="flex justify-center pt-2">
-              <Button onClick={() => setOpen(true)}>
-                <HugeiconsIcon icon={PlusSignIcon} size={16} />
-                Conectar WhatsApp
-              </Button>
-            </div>
-          </CardHeader>
-        </Card>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-border px-4 py-3">
+          <p className="text-sm text-muted-foreground">
+            Aún no hay cuentas conectadas. Conecta una desde Integraciones o comparte el botón de conexión con tus usuarios.
+          </p>
+          <Link href="/integraciones" className={buttonVariants({ variant: "outline", size: "sm" })}>
+            Ir a Integraciones
+          </Link>
+        </div>
       )}
 
       {visibleChannels.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-sm font-medium text-muted-foreground">Mensajería</h2>
-          {visibleChannels.map((c) => <ChannelRow key={c.id} channel={c} />)}
+        <section>
+          <h2 className="pb-2 text-base font-medium">Mensajería</h2>
+          <div className="divide-y divide-rule border-t border-border">
+            {visibleChannels.map((c) => <ChannelRow key={c.id} channel={c} />)}
+          </div>
         </section>
       )}
 
       {visibleIntegrations.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-sm font-medium text-muted-foreground">Calendario</h2>
-          {visibleIntegrations.map((i) => <IntegrationRow key={i.id} integration={i} />)}
+        <section>
+          <h2 className="pb-2 text-base font-medium">Calendario</h2>
+          <div className="divide-y divide-rule border-t border-border">
+            {visibleIntegrations.map((i) => <IntegrationRow key={i.id} integration={i} />)}
+          </div>
         </section>
       )}
 
@@ -425,6 +445,6 @@ export default function ChannelsPage() {
       )}
 
       <ConnectChannelDialog open={open} onClose={() => setOpen(false)} />
-    </main>
+    </Page>
   );
 }

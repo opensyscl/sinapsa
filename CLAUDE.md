@@ -69,7 +69,7 @@ docker compose logs -f nginx
 
 ## Convenciones frontend
 
-Ver [frontend/AGENTS.md](frontend/AGENTS.md). Resumen: Hugeicons obligatorio, Euclid obligatorio, cards `rounded-3xl border border-border`, botones primarios negros, sin gradientes.
+Ver [frontend/AGENTS.md](frontend/AGENTS.md). Resumen: Hugeicons obligatorio, Euclid obligatorio, panel con estilo "framed sheet" (cards `rounded-lg border`, marco `bg-frame`), botones primarios negros, sin gradientes.
 
 ## Iconos Hugeicons que NO existen (lección aprendida en rsv)
 

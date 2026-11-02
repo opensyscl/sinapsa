@@ -3,7 +3,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * Card de Sinapsa.
- * Forma canónica: `rounded-3xl border border-border bg-background`.
+ * Forma canónica: `rounded-lg border border-border bg-background`, sin sombra
+ * (vive dentro de la hoja blanca del panel, que es rounded-2xl).
  * NO usar `rounded-2xl border-gray-100 shadow-sm`.
  */
 export function Card({
@@ -13,7 +14,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-3xl border border-border bg-background",
+        "rounded-lg border border-border bg-background",
         className,
       )}
       {...props}

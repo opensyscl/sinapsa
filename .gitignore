@@ -63,3 +63,12 @@ next-env.d.ts
 
 # Sinapsa local fixtures (payloads Meta capturados en dev — no commitear)
 backend/tests/Fixtures/meta/local/
+
+# Notas locales del setup Meta (IDs y tokens) — no commitear
+meta-setup.local.md
+
+# taste-skill: capturas e inspecciones locales (la dirección elegida sí se versiona)
+.taste-skill/inspect/
+.taste-skill/snap/
+.taste-skill/before/
+.taste-skill/after/

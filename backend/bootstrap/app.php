@@ -2,6 +2,7 @@
 
 use App\Exceptions\ApiException;
 use App\Http\Middleware\IdempotencyKey;
+use App\Http\Middleware\LogApiRequest;
 use App\Http\Middleware\RequireApiScope;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -29,9 +30,13 @@ return Application::configure(basePath: dirname(__DIR__))
         attributes: ['prefix' => 'api', 'middleware' => ['api', 'auth:sanctum']],
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // En prod va detrás de Nginx del host + Nginx del container: respetar X-Forwarded-*
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'scope' => RequireApiScope::class,
             'idempotency' => IdempotencyKey::class,
+            'log.api' => LogApiRequest::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

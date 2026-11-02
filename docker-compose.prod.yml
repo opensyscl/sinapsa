@@ -1,0 +1,105 @@
+# Producción (VPS): docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+# Todo escucha solo en 127.0.0.1; el Nginx del host termina TLS y hace de proxy:
+#   sinapsahq.com, app.sinapsahq.com → frontend (127.0.0.1:8162)
+#   api.sinapsahq.com                → nginx Laravel (127.0.0.1:8160), /app y /apps → reverb (127.0.0.1:8161)
+name: sinapsa
+
+x-php: &php
+  image: sinapsa-php:latest
+  working_dir: /var/www/html
+  volumes:
+    - ./backend:/var/www/html
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_started
+  networks: [sinapsa]
+
+services:
+  php:
+    <<: *php
+
+  horizon:
+    <<: *php
+    command: ["php", "artisan", "horizon"]
+
+  scheduler:
+    <<: *php
+    command: ["php", "artisan", "schedule:work"]
+
+  reverb:
+    <<: *php
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    ports:
+      - "127.0.0.1:8161:8080"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8160:80"
+    volumes:
+      - ./backend:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - php
+    networks: [sinapsa]
+
+  frontend:
+    image: sinapsa-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8162:3000"
+    networks: [sinapsa]
+
+  # playground.sinapsahq.com — "Web X", app de ejemplo que integra Sinapsa (demo/saas-x)
+  # .env.playground (solo en el VPS): SINAPSA_API_KEY=sk_live_...
+  playground:
+    image: node:22-alpine
+    restart: unless-stopped
+    working_dir: /app
+    command: node server.mjs
+    env_file: .env.playground
+    environment:
+      PORT: 4010
+      SINAPSA_API_URL: https://api.sinapsahq.com
+      SINAPSA_APP_URL: https://app.sinapsahq.com
+    volumes:
+      - ./demo/saas-x:/app:ro
+    ports:
+      - "127.0.0.1:8163:4010"
+    networks: [sinapsa]
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sinapsa
+      POSTGRES_USER: sinapsa
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD requerido}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sinapsa -d sinapsa"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [sinapsa]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "128mb", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis_data:/data
+    networks: [sinapsa]
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  sinapsa:
+    driver: bridge

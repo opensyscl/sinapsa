@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\ApiTokenController;
 use App\Http\Controllers\Api\V1\ChannelController;
 use App\Http\Controllers\Api\V1\ConnectSessionController;
+use App\Http\Controllers\Api\V1\LogController;
 use App\Http\Controllers\Api\V1\ConversationController;
 use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\PublicIntegrationController;
@@ -53,6 +54,11 @@ Route::middleware('auth:sanctum')->get('/user', fn (Request $r) => $r->user());
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth:sanctum')->prefix('v1')->name('v1.')->group(function () {
+    // Registros (llamadas a la API y webhooks entrantes)
+    Route::get('logs/requests', [LogController::class, 'requests'])->name('logs.requests');
+    Route::get('logs/webhooks', [LogController::class, 'webhooks'])->name('logs.webhooks');
+    Route::get('logs/summary', [LogController::class, 'summary'])->name('logs.summary');
+
     // Channels
     Route::prefix('channels')->name('channels.')->group(function () {
         Route::get('/', [ChannelController::class, 'index'])->name('index');
@@ -159,7 +165,7 @@ Route::get('oauth/google/callback', [GoogleConnectController::class, 'callback']
 | Idempotency-Key opcional en POSTs.
 | Cada endpoint declara el scope mínimo requerido.
 */
-Route::middleware(['auth:api-token', 'idempotency'])->prefix('v1')->name('public.v1.')->group(function () {
+Route::middleware(['auth:api-token', 'log.api', 'idempotency'])->prefix('v1')->name('public.v1.')->group(function () {
     Route::get('messages', [PublicMessageController::class, 'index'])
         ->middleware('scope:messages:read')
         ->name('messages.index');
@@ -169,8 +175,10 @@ Route::middleware(['auth:api-token', 'idempotency'])->prefix('v1')->name('public
     Route::post('messages', [PublicMessageController::class, 'send'])
         ->middleware('scope:messages:write')
         ->name('messages.send');
+});
 
-    // Connect Session — el cliente SaaS llama esto para iniciar el embed flow
+// Connect Session — el cliente SaaS (sk_) o el dashboard (Sanctum) inician el flujo de conexión
+Route::middleware(['auth:api-token,sanctum', 'log.api', 'idempotency'])->prefix('v1')->name('public.v1.')->group(function () {
     Route::post('connect-sessions', [ConnectSessionController::class, 'store'])
         ->middleware('scope:channels:write')
         ->name('connect_sessions.store');
@@ -182,7 +190,7 @@ Route::middleware(['auth:api-token', 'idempotency'])->prefix('v1')->name('public
 |--------------------------------------------------------------------------
 | Mismas rutas para ambos: `sk_` (con scopes) o Sanctum (dashboard humano).
 */
-Route::middleware(['auth:api-token,sanctum', 'idempotency'])->prefix('v1/integrations')->name('public.v1.integrations.')->group(function () {
+Route::middleware(['auth:api-token,sanctum', 'log.api', 'idempotency'])->prefix('v1/integrations')->name('public.v1.integrations.')->group(function () {
     Route::get('/', [PublicIntegrationController::class, 'index'])->middleware('scope:integrations:read')->name('index');
     Route::get('{integration}', [PublicIntegrationController::class, 'show'])->middleware('scope:integrations:read')->name('show');
     Route::delete('{integration}', [PublicIntegrationController::class, 'destroy'])->middleware('scope:integrations:write')->name('destroy');
